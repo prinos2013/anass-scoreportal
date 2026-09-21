@@ -69,16 +69,25 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Pending Queue Sync Button -->
+        <button id="pendingSyncBtn" onclick="flushSyncQueue()" class="hidden px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-bold transition items-center gap-1.5 shadow-sm active:scale-95 animate-pulse" title="Offline scores waiting to sync">
+          <i id="queueSyncIcon" class="fa-solid fa-rotate"></i>
+          <span id="pendingCountBadge">0 Pending</span>
+        </button>
+
+        <!-- Google Sheet Settings Button -->
         <button onclick="openSyncSettingsModal()" class="px-3 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 border border-emerald-600 shadow-sm active:scale-95" title="Configure Google Sheets Webhook URL">
           <i class="fa-solid fa-table text-emerald-300"></i>
           <span class="hidden sm:inline">Sheet Sync</span>
           <span id="sheetSyncDot" class="w-2 h-2 rounded-full bg-rose-400"></span>
         </button>
+
         <button onclick="openRosterModal()" class="px-3 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 border border-emerald-600 shadow-sm active:scale-95">
           <i class="fa-solid fa-users-gear text-emerald-300"></i>
           <span>Rosters</span>
           <span id="navRosterCountBadge" class="bg-emerald-900 text-emerald-200 text-[11px] px-1.5 py-0.5 rounded-full font-mono">662</span>
         </button>
+
         <button onclick="exportToExcel()" class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
           <i class="fa-solid fa-file-excel"></i>
           <span class="hidden sm:inline">Excel</span>
@@ -101,7 +110,7 @@
             </span>
             <div>
               <h2 class="font-bold text-slate-800 text-base">Record Exam Score</h2>
-              <p class="text-xs text-slate-500">Live sync to Google Sheet &amp; Local storage</p>
+              <p class="text-xs text-slate-500">Offline-first recording with auto-queue sync</p>
             </div>
           </div>
           <span id="activeClassRosterCount" class="text-xs font-semibold px-2.5 py-1 bg-slate-200/70 text-slate-700 rounded-full font-mono">
@@ -215,7 +224,7 @@
             />
           </div>
 
-          <!-- Submit Button with Sync Loading State -->
+          <!-- Submit Button -->
           <div class="pt-2 flex items-center gap-3">
             <button type="submit" id="submitBtn" class="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wide shadow-md shadow-emerald-700/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
               <i id="submitBtnIcon" class="fa-solid fa-cloud-arrow-up"></i>
@@ -313,7 +322,7 @@
               <span>Exam Score Ledger</span>
               <span id="filteredRecordCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">0</span>
             </h2>
-            <p class="text-xs text-slate-500">Synced to Google Sheets and exported to Excel</p>
+            <p class="text-xs text-slate-500">Live sync to Google Sheets and exported to Excel</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -511,8 +520,7 @@
 
   <!-- Application Logic -->
   <script>
-    // Set your Google Apps Script Web App URL below:
-    var GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxodvABFWCGzWi1ZSU36b2vNNfSkeSGPAfh4Q7RVMpjB3GJiE7dTkKZXyECiOcUFkif/exec";
+    var GOOGLE_SHEET_WEBAPP_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL_HERE";
 
     // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
@@ -523,7 +531,6 @@
       });
     }
 
-    // Official 2025/2026 Portal Rosters (662 Students across 15 Classes)
     var DEFAULT_ROSTERS = {
       "AGRIC": [
         "ABBAM GODFRED", "ACQUAH ANTOINETTE", "ACQUAH BENJAMIN", "ACQUAH PATRICK", "AFFEL KINGSLEY", 
@@ -695,14 +702,13 @@
 
     var currentRosters = {};
     var recordedScores = [];
+    var syncQueue = [];
+    var isSyncingQueue = false;
     var customSubjects = ["Computing", "ICT"];
 
     function initializePortal() {
-      // Check for saved Web App URL in localStorage
       var savedUrl = localStorage.getItem("ANASS_SHEET_WEBAPP_URL");
-      if (savedUrl) {
-        GOOGLE_SHEET_WEBAPP_URL = savedUrl;
-      }
+      if (savedUrl) GOOGLE_SHEET_WEBAPP_URL = savedUrl;
       updateSyncStatusUI();
 
       try {
@@ -729,6 +735,11 @@
       } catch (e) { recordedScores = []; }
 
       try {
+        var savedQueue = localStorage.getItem("ANASS_SYNC_QUEUE");
+        if (savedQueue) syncQueue = JSON.parse(savedQueue);
+      } catch (e) { syncQueue = []; }
+
+      try {
         var savedSubs = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
         if (savedSubs) customSubjects = JSON.parse(savedSubs);
       } catch (e) { customSubjects = ["Computing", "ICT"]; }
@@ -739,6 +750,33 @@
       applyFiltersAndRenderTable();
       updateAnalyticsMetrics();
       updateTotalRosterBadge();
+      updateQueueBadge();
+
+      // Listen for network reconnect
+      window.addEventListener('online', function() {
+        showToast("Internet connected! Syncing pending records...");
+        flushSyncQueue();
+      });
+
+      // Try flushing queue if online on page load
+      if (navigator.onLine && syncQueue.length > 0) {
+        setTimeout(flushSyncQueue, 1500);
+      }
+    }
+
+    function updateQueueBadge() {
+      var btn = document.getElementById("pendingSyncBtn");
+      var countBadge = document.getElementById("pendingCountBadge");
+      if (!btn || !countBadge) return;
+
+      if (syncQueue.length > 0) {
+        countBadge.textContent = syncQueue.length + " Pending";
+        btn.classList.remove("hidden");
+        btn.classList.add("flex");
+      } else {
+        btn.classList.add("hidden");
+        btn.classList.remove("flex");
+      }
     }
 
     function updateSyncStatusUI() {
@@ -778,6 +816,7 @@
         updateSyncStatusUI();
         closeSyncSettingsModal();
         showToast("Google Sheet URL connected successfully!");
+        flushSyncQueue();
       } else {
         alert("Please enter a valid Google Apps Script Web App URL (starts with https://script.google.com/macros/s/...)");
       }
@@ -906,7 +945,7 @@
       badge.className = "text-xs font-bold px-2 py-0.5 rounded-full border " + res.badgeColor;
     }
 
-    // Submission handler with Google Sheets Webhook Sync
+    // Live Offline Queue + Background Sync Submission Handler
     function handleScoreSubmit(e) {
       e.preventDefault();
       var subject = document.getElementById("subjectSelect").value;
@@ -948,7 +987,7 @@
         timestamp: timestamp
       };
 
-      // Save locally first
+      // 1. Save locally immediately
       if (existingIndex > -1) {
         recordedScores[existingIndex] = recordItem;
       } else {
@@ -958,43 +997,79 @@
       applyFiltersAndRenderTable();
       updateAnalyticsMetrics();
 
-      // Clear input fields immediately for fast workflow
+      // 2. Clear input immediately so user can continue without delay
       document.getElementById("scoreInput").value = "";
       document.getElementById("remarkInput").value = "";
       handleScoreInputPreview("");
       document.getElementById("scoreInput").focus();
 
-      // Sync to Google Sheets if Webhook URL is configured
-      var isValidUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.indexOf("https://script.google.com/macros/s/") === 0;
+      // 3. Add to sync queue
+      addToSyncQueue(recordItem);
 
-      if (isValidUrl) {
-        var submitBtn = document.getElementById("submitBtn");
-        var btnText = document.getElementById("submitBtnText");
-        var btnIcon = document.getElementById("submitBtnIcon");
+      showToast("Saved " + student + ": " + scoreVal + " (" + gradeInfo.grade + ")");
 
-        btnText.textContent = "Syncing to Sheet...";
-        btnIcon.className = "fa-solid fa-spinner fa-spin";
+      // 4. Try sending queue in background
+      flushSyncQueue();
+    }
 
-        fetch(GOOGLE_SHEET_WEBAPP_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(recordItem)
-        })
-        .then(function() {
-          btnText.textContent = "Save & Sync Score";
-          btnIcon.className = "fa-solid fa-cloud-arrow-up";
-          showToast("Saved & Synced to Google Sheet: " + student + " (" + scoreVal + ")");
-        })
-        .catch(function(err) {
-          btnText.textContent = "Save & Sync Score";
-          btnIcon.className = "fa-solid fa-cloud-arrow-up";
-          console.error("Sheet sync error:", err);
-          showToast("Saved locally. (Sheet sync failed - check connection)");
-        });
-      } else {
-        showToast("Saved locally: " + student + " (" + scoreVal + ")");
+    function addToSyncQueue(item) {
+      // Overwrite if same student + class + subject is already waiting
+      var found = -1;
+      for (var i = 0; i < syncQueue.length; i++) {
+        if (syncQueue[i].student === item.student && syncQueue[i].className === item.className && syncQueue[i].subject === item.subject) {
+          found = i;
+          break;
+        }
       }
+
+      if (found > -1) {
+        syncQueue[found] = item;
+      } else {
+        syncQueue.push(item);
+      }
+
+      localStorage.setItem("ANASS_SYNC_QUEUE", JSON.stringify(syncQueue));
+      updateQueueBadge();
+    }
+
+    // Background Queue Worker
+    function flushSyncQueue() {
+      var isValidUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.indexOf("https://script.google.com/macros/s/") === 0;
+      if (!isValidUrl || syncQueue.length === 0 || isSyncingQueue) return;
+
+      isSyncingQueue = true;
+      var icon = document.getElementById("queueSyncIcon");
+      if (icon) icon.className = "fa-solid fa-rotate fa-spin";
+
+      // Take next item
+      var itemToSync = syncQueue[0];
+
+      fetch(GOOGLE_SHEET_WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(itemToSync)
+      })
+      .then(function() {
+        // Item successfully transmitted
+        syncQueue.shift();
+        localStorage.setItem("ANASS_SYNC_QUEUE", JSON.stringify(syncQueue));
+        updateQueueBadge();
+        isSyncingQueue = false;
+
+        // If more items remain, process next in queue after short pause
+        if (syncQueue.length > 0) {
+          setTimeout(flushSyncQueue, 400);
+        } else {
+          if (icon) icon.className = "fa-solid fa-rotate";
+          showToast("All pending scores synced to Google Sheet!");
+        }
+      })
+      .catch(function(err) {
+        console.warn("Queue sync paused (device offline):", err);
+        isSyncingQueue = false;
+        if (icon) icon.className = "fa-solid fa-rotate";
+      });
     }
 
     function resetEntryForm() {
@@ -1062,9 +1137,12 @@
       }
       if (confirm("Delete ALL score records? This cannot be undone.")) {
         recordedScores = [];
+        syncQueue = [];
         localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
+        localStorage.setItem("ANASS_SYNC_QUEUE", JSON.stringify(syncQueue));
         applyFiltersAndRenderTable();
         updateAnalyticsMetrics();
+        updateQueueBadge();
         showToast("All score records cleared.");
       }
     }

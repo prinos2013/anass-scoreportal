@@ -42,7 +42,7 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col custom-scrollbar">
 
-  <!-- Top Navigation Header with School Logo -->
+  <!-- Top Navigation Header -->
   <header class="bg-emerald-800 text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -86,10 +86,9 @@
   <!-- Main Content Layout -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Left Column: Entry Form Card -->
+    <!-- Left Column: Score Recording Form -->
     <div class="lg:col-span-5 flex flex-col gap-6">
       
-      <!-- Score Entry Card -->
       <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div class="bg-slate-50/80 border-b border-slate-200/80 px-5 py-4 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -98,11 +97,11 @@
             </span>
             <div>
               <h2 class="font-bold text-slate-800 text-base">Record Exam Score</h2>
-              <p class="text-xs text-slate-500">Enter and validate term examination marks</p>
+              <p class="text-xs text-slate-500">Enter and validate examination marks</p>
             </div>
           </div>
           <span id="activeClassRosterCount" class="text-xs font-semibold px-2.5 py-1 bg-slate-200/70 text-slate-700 rounded-full font-mono">
-            45 Students
+            -- Students
           </span>
         </div>
 
@@ -199,7 +198,7 @@
             <p id="scoreValidationMsg" class="text-xs text-rose-600 font-semibold mt-1 hidden"></p>
           </div>
 
-          <!-- Remarks -->
+          <!-- Teacher Remarks -->
           <div>
             <label for="remarkInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
               Teacher Remarks (Optional)
@@ -207,12 +206,12 @@
             <input 
               type="text" 
               id="remarkInput" 
-              placeholder="e.g. Excellent work" 
+              placeholder="e.g. Excellent conceptual grasp" 
               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition"
             />
           </div>
 
-          <!-- Submission Action Buttons -->
+          <!-- Action Buttons -->
           <div class="pt-2 flex items-center gap-3">
             <button type="submit" class="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wide shadow-md shadow-emerald-700/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
               <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -470,17 +469,18 @@
     <span id="toastMessage">Score recorded successfully!</span>
   </div>
 
-  <!-- Application Logic & Service Worker Registration -->
+  <!-- Application Logic -->
   <script>
     // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service Worker registered:', reg.scope))
-          .catch(err => console.log('Service Worker registration failed:', err));
+          .then(reg => console.log('SW Registered:', reg.scope))
+          .catch(err => console.log('SW Registration failed:', err));
       });
     }
 
+    // Default Rosters from official 2025.26 portal spreadsheet
     const DEFAULT_ROSTERS = {
       "AGRIC": ["ABBAM GODFRED", "ACQUAH ANTOINETTE", "ACQUAH BENJAMIN", "ACQUAH PATRICK", "AFFEL KINGSLEY", "AGYEKUM GLADYS", "AGYEMPONG VICTORIA", "AIDOO ANGELA", "AMOAH FRANCIS", "ANSAH BRIGHT", "ANSAH TEBOAH RICHARD", "ARKO ESTHER", "ARTHUR EBENEZER", "ARTHUR TEBOAH PRISCILLA", "ATUM OHENEWA KAREEM", "BAAH MARIO GIFT", "BAAH SAMSON", "BADU ANAMAN WILLIAM", "BADUR KYEI ELLIS", "BOATENG OWUSU BELINDA", "BOTWEY ALBERT NANA YAW", "BOTWEY DANIEL", "DADZIE SAMUEL", "ESHUN GLORIA", "GAMBA BISMARK", "ISSAH RASHID", "MANU EMMANUEL", "MARFO GIFTY BAAH", "MENSAH BRIGHT OSEI", "MENSAH DEBORAH", "MENSAH ISAAC", "MENSAH THOMAS", "NICHE GOODLUCK", "NSOWAH VERA", "ODOOM DORIS", "OFOSU PASCAL JOEL", "OKYERE AUGUSTINE", "OPARE RICHARD", "OPPONG GLORIA", "QUANSAH EBENEZER", "SACKEY JOSEPH", "SOFORTE MAWUNYO AMANDA", "TEBOAH SANDRA", "YAMOAH ERNEST", "YEBOAH ASANTE KWEKU"][cite: 1],
       "ARTS 1": ["ABBAN SILAS", "ADJEI DANIEL", "AFFUL REGINA", "AGGREY GIFTY NHYIRABA", "AGGREY STEPHANIE", "AGYAPONG PRISCILLA", "AHIANYO BENEDICTA", "AIDOO EMMANUELLA AYEH", "AMEDUME EUNICE", "AMOAH EBENEZER", "AMOAH PRISCILLA", "AMOASI JESSICA", "AMPADU OBED SENIOR", "ANOWAH THERESAH", "APPIAH JOANA", "ARHIN NICHOLAS", "ARTHUR EMMANUEL", "ASANTE CHRISTABEL GYAMFUWAA", "ASANTE EDWIN OSEW", "ATAMALE EDNA LAMISI", "ATITSO CATHERINE KEKELI", "ATWER RICHARD", "AZALOO AUGUSTINA DZIDEDI", "BAAH VINCENT", "BAFFOE KATE ANTWI", "BEDIAKO EDWARD", "BOADU SAMUEL MENSAH", "BOTCHWEY EMMANUEL", "BOTWEY GERRARD MENSAH", "CLOTTEY ESTHER", "COFFIE ALEXANDER", "DADZIE PRISCILLA", "DANSO PAULINA AKUA AKYAA", "DONKOH JAMES", "DUMENYAH ISABELLA VERA KLENAM YAWO", "EGBUABA RITA AMARA", "ENTSIL LETICIA KORANKYEWAA", "ESSAH-QUARM YVONNE YEDIE", "ESSEL EKOW NANA", "FRIMPONG GEORGINA", "FUSEINI YASMINATU", "IDUN EMILY BAIDOO", "INTISIFUL SOPHIA", "JORBUNO CLIFFORD SEI", "KAKRABA CHRISTOPHER ENCHIL KWEKU", "KARIMATU MOHAMMED", "KUMAH BLESSING", "KUSSIEDU CHRISTIAN LAWEH", "KUUNIBE ZUVIEL JUDITH", "KWEGYIR EVANS", "LAMPTEY MAAJULIE", "MARRIAM LARRY", "MAWUSI CHRISTIANA", "MENSAH EVANS", "MENSAH JOANA", "MENSAH VERA", "NHYIRA JOANA", "NTIM DESMOND OPOKU", "OBOSU ROSALINDA", "OKAITEI ENOCH NATTEY", "OSEI SYRIA", "OSSEW EDWARD ASANTE", "PRAH VICENTIA BAIDOO", "QUAINOO EMMANUEL", "QUAINOO FELIX", "ROBERTSON DORA", "SACKEY ANGELINA", "SACKEY GRACE TWUMWAA", "SADIA DAUDA", "TAKYI WINIFRED", "YEBOAH ELIZABETH", "YEVU ESTHER", "ZURFAWU MOHAMMED"][cite: 1],
@@ -503,78 +503,41 @@
     let recordedScores = [];
     let customSubjects = ["Computing", "ICT"];
 
-    document.addEventListener("DOMContentLoaded", () => {
-      loadStorageData();
-      populateClassSelectors();
-      updateSubjectDropdown();
-      onClassChange();
-      applyFiltersAndRenderTable();
-      updateAnalyticsMetrics();
-      updateTotalRosterBadge();
-    });
+    // Initialize data safely
+    function initializeData() {
+      // Check if rosters exist and are non-empty
+      const stored = localStorage.getItem("ANASS_ROSTERS_2026");
+      let needsReset = false;
 
-    function loadStorageData() {
-      const storedRosters = localStorage.getItem("ANASS_ROSTERS_2026");
-      if (storedRosters) {
+      if (stored) {
         try {
-          currentRosters = JSON.parse(storedRosters);
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length >= 15) {
+            currentRosters = parsed;
+          } else {
+            needsReset = true;
+          }
         } catch(e) {
-          currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+          needsReset = true;
         }
       } else {
+        needsReset = true;
+      }
+
+      if (needsReset) {
         currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
-        saveRostersToStorage();
+        localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
       }
 
       const storedScores = localStorage.getItem("ANASS_SCORES_RECORDED");
       if (storedScores) {
-        try {
-          recordedScores = JSON.parse(storedScores);
-        } catch(e) {
-          recordedScores = [];
-        }
+        try { recordedScores = JSON.parse(storedScores); } catch(e) { recordedScores = []; }
       }
 
-      const storedSubjects = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
-      if (storedSubjects) {
-        try {
-          customSubjects = JSON.parse(storedSubjects);
-        } catch(e) {
-          customSubjects = ["Computing", "ICT"];
-        }
+      const storedSubs = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
+      if (storedSubs) {
+        try { customSubjects = JSON.parse(storedSubs); } catch(e) { customSubjects = ["Computing", "ICT"]; }
       }
-    }
-
-    function saveRostersToStorage() {
-      localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
-      updateTotalRosterBadge();
-    }
-
-    function saveScoresToStorage() {
-      localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
-    }
-
-    function saveSubjectsToStorage() {
-      localStorage.setItem("ANASS_CUSTOM_SUBJECTS", JSON.stringify(customSubjects));
-    }
-
-    function restorePortalDefaults() {
-      if (confirm("Reset all 15 class rosters back to the official 2025/2026 Portal List?")) {
-        currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
-        saveRostersToStorage();
-        onClassChange();
-        renderModalRosterList();
-        showToast("Rosters reset to official 2025/2026 portal list!");
-      }
-    }
-
-    function updateTotalRosterBadge() {
-      let count = 0;
-      for (const cls in currentRosters) {
-        count += currentRosters[cls].length;
-      }
-      const badge = document.getElementById("navRosterCountBadge");
-      if (badge) badge.textContent = count;
     }
 
     function populateClassSelectors() {
@@ -583,6 +546,8 @@
       const modalClassSelector = document.getElementById("modalClassSelector");
 
       const classes = Object.keys(currentRosters);
+      if (classes.length === 0) return;
+
       classSelect.innerHTML = "";
       filterClassSelect.innerHTML = '<option value="ALL">All Classes</option>';
       modalClassSelector.innerHTML = "";
@@ -607,44 +572,52 @@
       });
     }
 
+    function onClassChange() {
+      const classSelect = document.getElementById("classSelect");
+      const selectedClass = classSelect ? classSelect.value : "AGRIC";
+      const studentSelect = document.getElementById("studentSelect");
+      const countBadge = document.getElementById("activeClassRosterCount");
+      const quickViewName = document.getElementById("quickViewClassName");
+      const quickList = document.getElementById("quickClassRosterList");
+
+      if (!studentSelect) return;
+      studentSelect.innerHTML = "";
+
+      const students = currentRosters[selectedClass] || [];
+      if (countBadge) countBadge.textContent = `${students.length} Students`;
+      if (quickViewName) quickViewName.textContent = selectedClass;
+
+      if (students.length === 0) {
+        const placeholder = new Option("-- No students in this class --", "");
+        placeholder.disabled = true;
+        studentSelect.add(placeholder);
+        if (quickList) quickList.innerHTML = '<span class="text-slate-400 italic">No students currently enrolled.</span>';
+      } else {
+        students.forEach(student => {
+          studentSelect.add(new Option(student, student));
+        });
+
+        if (quickList) {
+          quickList.innerHTML = students.map(st => 
+            `<span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">${st}</span>`
+          ).join("");
+        }
+      }
+    }
+
     function promptAddSubject() {
       const newSub = prompt("Enter new Subject name:");
       if (newSub && newSub.trim()) {
         const trimmed = newSub.trim();
         if (!customSubjects.includes(trimmed)) {
           customSubjects.push(trimmed);
-          saveSubjectsToStorage();
+          localStorage.setItem("ANASS_CUSTOM_SUBJECTS", JSON.stringify(customSubjects));
           updateSubjectDropdown();
           document.getElementById("subjectSelect").value = trimmed;
           showToast(`Subject "${trimmed}" added!`);
         } else {
-          alert("This subject already exists in the list.");
+          alert("This subject already exists.");
         }
-      }
-    }
-
-    function onClassChange() {
-      const selectedClass = document.getElementById("classSelect").value;
-      const studentSelect = document.getElementById("studentSelect");
-      const countBadge = document.getElementById("activeClassRosterCount");
-      const quickViewName = document.getElementById("quickViewClassName");
-      const quickList = document.getElementById("quickClassRosterList");
-
-      studentSelect.innerHTML = "";
-      const students = currentRosters[selectedClass] || [];
-      countBadge.textContent = `${students.length} Students`;
-      quickViewName.textContent = selectedClass;
-
-      if (students.length === 0) {
-        const placeholder = new Option("-- No students in this class --", "");
-        placeholder.disabled = true;
-        studentSelect.add(placeholder);
-        quickList.innerHTML = '<span class="text-slate-400 italic">No students currently enrolled.</span>';
-      } else {
-        students.forEach(student => studentSelect.add(new Option(student, student)));
-        quickList.innerHTML = students.map(st => 
-          `<span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">${st}</span>`
-        ).join("");
       }
     }
 
@@ -732,7 +705,7 @@
         showToast(`Saved ${student}: ${scoreVal} (${gradeInfo.grade})`);
       }
 
-      saveScoresToStorage();
+      localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
       applyFiltersAndRenderTable();
       updateAnalyticsMetrics();
 
@@ -801,7 +774,7 @@
     function deleteScoreEntry(id) {
       if (confirm("Remove this score record?")) {
         recordedScores = recordedScores.filter(r => r.id !== id);
-        saveScoresToStorage();
+        localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
         applyFiltersAndRenderTable();
         updateAnalyticsMetrics();
         showToast("Record removed.");
@@ -815,7 +788,7 @@
       }
       if (confirm("Delete ALL score records? This cannot be undone.")) {
         recordedScores = [];
-        saveScoresToStorage();
+        localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
         applyFiltersAndRenderTable();
         updateAnalyticsMetrics();
         showToast("All score records cleared.");
@@ -942,7 +915,7 @@
 
       currentRosters[className].push(upperName);
       currentRosters[className].sort();
-      saveRostersToStorage();
+      saveRosters();
       onClassChange();
       showToast(`Added ${upperName} to ${className}!`);
       return true;
@@ -951,11 +924,36 @@
     function removeStudentFromModalClass(className, studentName) {
       if (confirm(`Remove "${studentName}" from ${className}?`)) {
         currentRosters[className] = currentRosters[className].filter(s => s !== studentName);
-        saveRostersToStorage();
+        saveRosters();
         renderModalRosterList();
         onClassChange();
         showToast(`Removed ${studentName}.`);
       }
+    }
+
+    function saveRosters() {
+      localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
+      updateTotalRosterBadge();
+    }
+
+    function restorePortalDefaults() {
+      if (confirm("Reset all 15 class rosters back to the official 2025/2026 Portal List?")) {
+        currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+        saveRosters();
+        populateClassSelectors();
+        onClassChange();
+        renderModalRosterList();
+        showToast("Rosters reset to official 2025/2026 portal list!");
+      }
+    }
+
+    function updateTotalRosterBadge() {
+      let count = 0;
+      for (const cls in currentRosters) {
+        count += currentRosters[cls].length;
+      }
+      const badge = document.getElementById("navRosterCountBadge");
+      if (badge) badge.textContent = count;
     }
 
     function exportToExcel() {
@@ -1026,6 +1024,15 @@
         toast.classList.add("translate-y-24", "opacity-0");
       }, 2800);
     }
+
+    // Direct Bootstrapping Execution
+    initializeData();
+    populateClassSelectors();
+    updateSubjectDropdown();
+    onClassChange();
+    applyFiltersAndRenderTable();
+    updateAnalyticsMetrics();
+    updateTotalRosterBadge();
   </script>
 </body>
 </html>

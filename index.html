@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ANASS ScorePortal - Examination Recording & Management</title>
+  
+  <!-- PWA & Mobile Web Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#065f46">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ScorePortal">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Native Excel (.xlsx) Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col custom-scrollbar">
+
+  <!-- Top Navigation Header with School Logo -->
+  <header class="bg-emerald-800 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <!-- School Logo with Auto-Fallback -->
+        <div class="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shadow-md overflow-hidden shrink-0 border border-emerald-600">
+          <img 
+            src="logo.png" 
+            alt="ANASS Logo" 
+            class="w-full h-full object-contain"
+            onerror="this.style.display='none'; document.getElementById('logoFallbackIcon').classList.remove('hidden');"
+          />
+          <div id="logoFallbackIcon" class="hidden text-emerald-800 text-xl">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight">ANASS ScorePortal</h1>
+            <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-700 text-emerald-200 border border-emerald-600">2025/2026</span>
+          </div>
+          <p class="text-xs text-emerald-200">Assin Nsuta Agric Senior High School</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openRosterModal()" class="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-2 border border-emerald-600 shadow-sm active:scale-95">
+          <i class="fa-solid fa-users-gear text-emerald-300"></i>
+          <span>Rosters</span>
+          <span id="navRosterCountBadge" class="bg-emerald-900 text-emerald-200 text-[11px] px-2 py-0.5 rounded-full font-mono">662</span>
+        </button>
+        <button onclick="exportToExcel()" class="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-sm active:scale-95">
+          <i class="fa-solid fa-file-excel"></i>
+          <span class="hidden sm:inline">Export Scores (.xlsx)</span>
+          <span class="sm:hidden">Excel</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Entry Form Card -->
+    <div class="lg:col-span-5 flex flex-col gap-6">
+      
+      <!-- Score Entry Card -->
+      <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="bg-slate-50/80 border-b border-slate-200/80 px-5 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+              <i class="fa-solid fa-pen-nib"></i>
+            </span>
+            <div>
+              <h2 class="font-bold text-slate-800 text-base">Record Exam Score</h2>
+              <p class="text-xs text-slate-500">Enter and validate term examination marks</p>
+            </div>
+          </div>
+          <span id="activeClassRosterCount" class="text-xs font-semibold px-2.5 py-1 bg-slate-200/70 text-slate-700 rounded-full font-mono">
+            45 Students
+          </span>
+        </div>
+
+        <form id="scoreEntryForm" onsubmit="handleScoreSubmit(event)" class="p-5 flex flex-col gap-4">
+          
+          <!-- Subject Select -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="subjectSelect" class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                1. Select Subject <span class="text-rose-500">*</span>
+              </label>
+              <button type="button" onclick="promptAddSubject()" class="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-circle-plus"></i> New Subject
+              </button>
+            </div>
+            <div class="relative">
+              <select id="subjectSelect" required class="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition cursor-pointer">
+                <option value="Computing">Computing</option>
+                <option value="ICT">ICT</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class Select -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="classSelect" class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                2. Select Class <span class="text-rose-500">*</span>
+              </label>
+              <button type="button" onclick="openClassRosterQuickEdit()" class="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-user-pen"></i> Edit Roster
+              </button>
+            </div>
+            <div class="relative">
+              <select id="classSelect" onchange="onClassChange()" required class="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition cursor-pointer">
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Select -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="studentSelect" class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                3. Select Student <span class="text-rose-500">*</span>
+              </label>
+              <button type="button" onclick="openQuickAddStudentModal()" class="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-user-plus"></i> Add Student
+              </button>
+            </div>
+            <div class="relative">
+              <select id="studentSelect" required class="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition cursor-pointer">
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Input Field -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="scoreInput" class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                4. Enter Score (Max: 100) <span class="text-rose-500">*</span>
+              </label>
+              <span id="gradePreviewBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                Grade: --
+              </span>
+            </div>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-mono text-sm font-semibold">
+                #
+              </div>
+              <input 
+                type="number" 
+                id="scoreInput" 
+                min="0" 
+                max="100" 
+                step="0.5" 
+                placeholder="e.g. 78.5" 
+                required 
+                oninput="handleScoreInputPreview(this.value)"
+                class="w-full pl-9 pr-20 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-base font-bold rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition font-mono"
+              />
+              <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-slate-400 pointer-events-none">
+                / 100
+              </span>
+            </div>
+            <p id="scoreValidationMsg" class="text-xs text-rose-600 font-semibold mt-1 hidden"></p>
+          </div>
+
+          <!-- Remarks -->
+          <div>
+            <label for="remarkInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Teacher Remarks (Optional)
+            </label>
+            <input 
+              type="text" 
+              id="remarkInput" 
+              placeholder="e.g. Excellent work" 
+              class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition"
+            />
+          </div>
+
+          <!-- Submission Action Buttons -->
+          <div class="pt-2 flex items-center gap-3">
+            <button type="submit" class="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wide shadow-md shadow-emerald-700/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Save &amp; Record Score</span>
+            </button>
+            <button type="button" onclick="resetEntryForm()" class="p-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition active:scale-95" title="Clear form">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Quick Class Roster Overview -->
+      <section class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-address-book text-emerald-600 text-sm"></i>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Class Roster Preview</h3>
+          </div>
+          <button onclick="openClassRosterQuickEdit()" class="text-xs text-emerald-700 font-bold hover:underline">
+            Manage <span id="quickViewClassName">AGRIC</span>
+          </button>
+        </div>
+        <div id="quickClassRosterList" class="max-h-48 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5 text-xs text-slate-700">
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right Column: Analytics & Ledger Table -->
+    <div class="lg:col-span-7 flex flex-col gap-6">
+
+      <!-- Analytics Metric Cards -->
+      <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Entries</span>
+            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span id="metricTotalEntries" class="text-2xl font-black text-slate-800 font-mono">0</span>
+            <span class="text-xs text-slate-400">records</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Average</span>
+            <div class="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span id="metricClassAverage" class="text-2xl font-black text-slate-800 font-mono">0.0</span>
+            <span class="text-xs text-slate-400">/ 100</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Highest</span>
+            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-trophy"></i>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span id="metricHighestScore" class="text-2xl font-black text-slate-800 font-mono">0.0</span>
+            <span id="metricHighestStudent" class="text-[10px] text-slate-400 truncate max-w-[80px]">None</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Pass Rate</span>
+            <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-percent"></i>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span id="metricPassRate" class="text-2xl font-black text-slate-800 font-mono">0%</span>
+            <span class="text-xs text-slate-400">(&ge;50)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Score Records Table Card -->
+      <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Table Toolbar -->
+        <div class="p-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+              <span>Exam Score Ledger</span>
+              <span id="filteredRecordCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">0</span>
+            </h2>
+            <p class="text-xs text-slate-500">Export filtered records directly to Excel</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filterClassSelect" onchange="applyFiltersAndRenderTable()" class="px-2.5 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500">
+              <option value="ALL">All Classes</option>
+            </select>
+
+            <select id="filterSubjectSelect" onchange="applyFiltersAndRenderTable()" class="px-2.5 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500">
+              <option value="ALL">All Subjects</option>
+              <option value="Computing">Computing</option>
+              <option value="ICT">ICT</option>
+            </select>
+
+            <div class="relative flex-1 sm:flex-initial">
+              <input 
+                type="text" 
+                id="searchStudentInput" 
+                placeholder="Search name..." 
+                oninput="applyFiltersAndRenderTable()"
+                class="w-full sm:w-36 pl-7 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 text-slate-800"
+              />
+              <i class="fa-solid fa-magnifying-glass text-[11px] text-slate-400 absolute left-2.5 top-2.5 pointer-events-none"></i>
+            </div>
+
+            <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>Excel</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="flex-1 overflow-x-auto custom-scrollbar min-h-[320px]">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-slate-100/75 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+              <tr>
+                <th class="py-3 px-3.5">#</th>
+                <th class="py-3 px-3.5">Student Name</th>
+                <th class="py-3 px-3.5">Class</th>
+                <th class="py-3 px-3.5">Subject</th>
+                <th class="py-3 px-3.5 text-right">Score</th>
+                <th class="py-3 px-3.5 text-center">Grade</th>
+                <th class="py-3 px-3.5">Remark</th>
+                <th class="py-3 px-3.5 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="scoreLedgerBody" class="divide-y divide-slate-100">
+            </tbody>
+          </table>
+          <div id="noRecordsNotice" class="hidden flex-col items-center justify-center p-12 text-center text-slate-400">
+            <i class="fa-regular fa-folder-open text-4xl mb-2 text-slate-300"></i>
+            <p class="font-bold text-sm text-slate-600">No Exam Records Found</p>
+            <p class="text-xs text-slate-400">Select a student and record a score to get started.</p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+          <span>Storage: <strong>Browser Local Storage</strong></span>
+          <button onclick="confirmClearAllRecords()" class="text-rose-600 hover:text-rose-700 font-semibold text-xs flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> Clear All Scores
+          </button>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL: Class Roster Management -->
+  <div id="rosterModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold">
+            <i class="fa-solid fa-users text-sm"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">ANASS Class Rosters Manager</h3>
+            <p class="text-xs text-slate-300">Add or remove enrolled students per class</p>
+          </div>
+        </div>
+        <button onclick="closeRosterModal()" class="text-slate-400 hover:text-white text-lg p-1 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Active Class Roster</label>
+            <select id="modalClassSelector" onchange="renderModalRosterList()" class="px-3 py-1.5 bg-white border border-slate-300 font-bold text-slate-800 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            </select>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">Enrolled In This Class</div>
+            <div id="modalClassCount" class="text-lg font-black text-emerald-700 font-mono">0 Students</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Add New Student to <span id="modalAddClassLabel" class="text-emerald-700">AGRIC</span>
+          </label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="newStudentNameInput" 
+              placeholder="Full name (e.g. KOFI OWUSU ADDO)" 
+              class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
+              onkeydown="if(event.key==='Enter'){event.preventDefault(); addNewStudentToModalClass();}"
+            />
+            <button type="button" onclick="addNewStudentToModalClass()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <p id="modalRosterErrorMsg" class="text-xs text-rose-600 font-semibold mt-1 hidden"></p>
+        </div>
+
+        <div class="relative">
+          <input 
+            type="text" 
+            id="modalRosterFilter" 
+            placeholder="Search students in this class..." 
+            oninput="renderModalRosterList()"
+            class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+          <i class="fa-solid fa-magnifying-glass text-[11px] text-slate-400 absolute left-2.5 top-2.5 pointer-events-none"></i>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-slate-100 px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 flex justify-between">
+            <span>Student Name</span>
+            <span>Remove</span>
+          </div>
+          <ul id="modalRosterItemsList" class="divide-y divide-slate-100 max-h-64 overflow-y-auto custom-scrollbar text-sm">
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border-t border-slate-200 px-5 py-3.5 flex items-center justify-between">
+        <button onclick="restorePortalDefaults()" class="text-xs text-slate-500 hover:text-amber-700 font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-rotate"></i> Reset Rosters to 2025/2026 Portal List
+        </button>
+        <button onclick="closeRosterModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition">
+          Done &amp; Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition duration-300 pointer-events-none flex items-center gap-2.5 px-4 py-3 bg-slate-900 text-white rounded-xl shadow-2xl text-xs sm:text-sm font-semibold border border-slate-700">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toastMessage">Score recorded successfully!</span>
+  </div>
+
+  <!-- Application Logic & Service Worker Registration -->
+  <script>
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+
+    const DEFAULT_ROSTERS = {
+      "AGRIC": ["ABBAM GODFRED", "ACQUAH ANTOINETTE", "ACQUAH BENJAMIN", "ACQUAH PATRICK", "AFFEL KINGSLEY", "AGYEKUM GLADYS", "AGYEMPONG VICTORIA", "AIDOO ANGELA", "AMOAH FRANCIS", "ANSAH BRIGHT", "ANSAH TEBOAH RICHARD", "ARKO ESTHER", "ARTHUR EBENEZER", "ARTHUR TEBOAH PRISCILLA", "ATUM OHENEWA KAREEM", "BAAH MARIO GIFT", "BAAH SAMSON", "BADU ANAMAN WILLIAM", "BADUR KYEI ELLIS", "BOATENG OWUSU BELINDA", "BOTWEY ALBERT NANA YAW", "BOTWEY DANIEL", "DADZIE SAMUEL", "ESHUN GLORIA", "GAMBA BISMARK", "ISSAH RASHID", "MANU EMMANUEL", "MARFO GIFTY BAAH", "MENSAH BRIGHT OSEI", "MENSAH DEBORAH", "MENSAH ISAAC", "MENSAH THOMAS", "NICHE GOODLUCK", "NSOWAH VERA", "ODOOM DORIS", "OFOSU PASCAL JOEL", "OKYERE AUGUSTINE", "OPARE RICHARD", "OPPONG GLORIA", "QUANSAH EBENEZER", "SACKEY JOSEPH", "SOFORTE MAWUNYO AMANDA", "TEBOAH SANDRA", "YAMOAH ERNEST", "YEBOAH ASANTE KWEKU"][cite: 1],
+      "ARTS 1": ["ABBAN SILAS", "ADJEI DANIEL", "AFFUL REGINA", "AGGREY GIFTY NHYIRABA", "AGGREY STEPHANIE", "AGYAPONG PRISCILLA", "AHIANYO BENEDICTA", "AIDOO EMMANUELLA AYEH", "AMEDUME EUNICE", "AMOAH EBENEZER", "AMOAH PRISCILLA", "AMOASI JESSICA", "AMPADU OBED SENIOR", "ANOWAH THERESAH", "APPIAH JOANA", "ARHIN NICHOLAS", "ARTHUR EMMANUEL", "ASANTE CHRISTABEL GYAMFUWAA", "ASANTE EDWIN OSEW", "ATAMALE EDNA LAMISI", "ATITSO CATHERINE KEKELI", "ATWER RICHARD", "AZALOO AUGUSTINA DZIDEDI", "BAAH VINCENT", "BAFFOE KATE ANTWI", "BEDIAKO EDWARD", "BOADU SAMUEL MENSAH", "BOTCHWEY EMMANUEL", "BOTWEY GERRARD MENSAH", "CLOTTEY ESTHER", "COFFIE ALEXANDER", "DADZIE PRISCILLA", "DANSO PAULINA AKUA AKYAA", "DONKOH JAMES", "DUMENYAH ISABELLA VERA KLENAM YAWO", "EGBUABA RITA AMARA", "ENTSIL LETICIA KORANKYEWAA", "ESSAH-QUARM YVONNE YEDIE", "ESSEL EKOW NANA", "FRIMPONG GEORGINA", "FUSEINI YASMINATU", "IDUN EMILY BAIDOO", "INTISIFUL SOPHIA", "JORBUNO CLIFFORD SEI", "KAKRABA CHRISTOPHER ENCHIL KWEKU", "KARIMATU MOHAMMED", "KUMAH BLESSING", "KUSSIEDU CHRISTIAN LAWEH", "KUUNIBE ZUVIEL JUDITH", "KWEGYIR EVANS", "LAMPTEY MAAJULIE", "MARRIAM LARRY", "MAWUSI CHRISTIANA", "MENSAH EVANS", "MENSAH JOANA", "MENSAH VERA", "NHYIRA JOANA", "NTIM DESMOND OPOKU", "OBOSU ROSALINDA", "OKAITEI ENOCH NATTEY", "OSEI SYRIA", "OSSEW EDWARD ASANTE", "PRAH VICENTIA BAIDOO", "QUAINOO EMMANUEL", "QUAINOO FELIX", "ROBERTSON DORA", "SACKEY ANGELINA", "SACKEY GRACE TWUMWAA", "SADIA DAUDA", "TAKYI WINIFRED", "YEBOAH ELIZABETH", "YEVU ESTHER", "ZURFAWU MOHAMMED"][cite: 1],
+      "ARTS 2A": ["ACKAAH BEATRICE", "ACKWERH GIDEON", "ACQUAH BARIKISU BADUA", "ACQUAH EVELYN", "ADIKAH ERIC", "ADJEI ISAAC", "AFFRIM HENRY NYAMEKYE JNR.", "AGYIR EMELIA", "AIDOO JOHN", "AMUZU PHANNUEL", "ANIM ALFREDA OHEMAA", "ANTWIWAA ELIZABETH BARBARA", "ANTWIWAAH AGYEMANG E. BOTAH", "APPIAH EMMANUEL", "ARTHUR CINDY", "ARTHUR STEPHEN", "ASAMOAH KINGSFORD", "ASANTE-ACQUAH JOEL", "ASARE JOSHUA", "ASEIDU PRINCE MENSAH", "ASIAMAH GRACE", "AYIAH ENOCH", "BAFFOUR SAMUEL", "BAIDOO EMMANUEL", "BARYEE ERICA ALICE SLEWRO", "BOAFO ABRAHAM", "BOTCHWAY CHRISTABEL", "DADZIE SYLVESTER", "DANKWAH VICENTIA", "EFFAH-OWUSU SHIRLEY AMOAKOWAA", "GBEBLEWU PRISCILLA", "GYAMFI BISMARK", "JAJAH HAFSATU MUTAWUHLU", "KAFARI DAISY", "KLUTSE DOROTHY", "KOOMSON LYDIA", "KYEI ABIGAIL NHYIRA BOATEMAA", "KYEREWA YAWSON BLESSING", "LAMPTEY JESSICA", "MENSAH CHARITY", "MENSAH WINNIFRED EDUAH", "NDEGO FAUSTINA", "NIFA ESTHER AMOANOO", "NKPANBI MARY", "NKPANBI MARY", "NUNOO JACOB AKUETEH", "OFORI EDWINA", "PAINTSIL EDNA", "SAM JENNIFER MILLS", "SHAIBU SADIK ABUBAKAR", "TABOH RICHARD", "WILLIAMS VERA YAYRA", "YUSSIF DANJUMAH"][cite: 1],
+      "ARTS 2B": ["ABANO FLORENCE", "ABEKA ENNIN LETICIA", "ADIAKO FELIX", "ADU APOH CHARLOTTE", "AFFIAMOAH IVY TSIBU", "AFFOH JESSICA", "AFFOH JESSICA", "AIDOO EMMANUEL", "AKYAA OWUSU EDMUNDS", "ALELOEY ELINICE", "AMADAKO HARRIET", "AMARE PRINCE", "AMENUVOR ISAAC", "AMOAH THOMAS", "AMOAMA CHRIS", "ANNAH DAVID", "ANNOR MAYBEL", "APPAU JUSTICE", "ARMAH NOARA N.A", "ARMAH NORA N.A", "ARMAH NORA NAA AYELLEY", "ARTHUR GIFTY", "ASAKE STEPHEN", "ASAMPANA PRISCILLA AWOKA", "ATAKPA MARTHA", "ATILA WISDOM", "ATTA INISMAN", "AWUAH SAMIRATU", "AYENSU RUTH", "BAIDOO BISMARK", "BAIDOO HENRY", "BEGYINA RICHARD", "BINEY CORNELIUS", "COFFIE REGINA NAA CHARNOR", "DAKOH VICTORIA ENYONAM", "DONKOR NANA YAA NANCY", "EBOAH MARY", "ESHUN JOSEPH HARRISON", "ESSUMAN SAMPSON", "GBOGBO MAWUTOR JESSICA", "KWAKYE GIFTY", "LAMPTEY ANNABEL K.T", "LAMPTEY BLESSING", "MENSAH CELESTINA", "MENSAH HENRY OSEI", "MENSAH MARY", "NKUM SHERIFFE", "OBOH CHRISTABEL", "OHENE BRIDGET", "OHENE RICHMOND", "OPOKU VERA YAA", "OTABIL BISMARK", "OWENE BRIGHT", "QUAINOO MARY", "TIMO EUGENE", "YEBOAH YVONNE"][cite: 1],
+      "ARTS 3": ["ADJEWUNAH JOYCE", "AKOMANYI STEPHENIE", "AMOAH HANNAH", "AMOAKO MATILDA", "ANDOH STEPHEN", "ANKOMAH NANA AFARI", "ANSAH VICENTIA", "APPIAH MICHELLE NHYIRA", "APPIAH MIMI NHYIRA", "APPU MARY", "ARTHUR PATIENCE", "ASAMOAH FRANCISCA NKRUMAH", "ASAMOAH JOYCE", "ATENSU HILDA", "AYENSU HILDA", "AYITEY BENEDICTA", "AYITEY ELIZABETH", "BOADI MATILDA", "BOAFOAH MARY", "BOTWEY PRINCE", "DADZIE JOSHUA", "DANSO BRIGHT", "DANSO PATIENCE", "DONKOR BENEDICTA", "DONKOR MATILDA", "DUODU PRISCILLA", "EDUMADZE EUNICE", "EFFUM REBECCA", "ENTSIE EMMANUEL", "FOSU KELVIN", "FRIMPONG FRANCIS", "GYAN EUNICE", "KORANKYE FRANCIS", "KRAMPAH PRISCILLA", "KUMI PATIENCE", "KUSI AGNES", "KUSI DANIEL", "KYEI VERONICA", "MINTAH ADELAIDE", "MINTAH CHARITY", "MINTAH JANET", "MINTAH MERCY", "MINTAH PORTIA", "MINTAH ROSEMOND", "MOHAMMED SUWEIBATU", "NDUR JOSHUA", "NINSON REBECCA", "NKRUMAH ERNESTINA", "NKANSAH EMMANUEL", "NYAMEKYE ERNEST", "OFORI AGNES", "OFORI GIFTY", "OPOKU EBENEZER", "OSEI ISAAC", "QUAYE ENOCH", "QUAYE JOYCE", "SARPONG AGNES", "TAKYI BRIGHT", "WONKYI ELIZABETH"],
+      "ARTS 4": ["ABOAGYEWAA ABIGAIL ETEIR", "AMOASI CECILIA", "ANAFO PATRICK", "ANDOH CHRISTABEL", "APPIAH THERESAH", "ASAMOAH KINGSLEY", "ASANTE CECILIA", "BADU AUGUSTINE BOAKO", "BAIDOO EMMACULATE NYARKOAH", "BOATENG IRENE", "BODUAH DENNIS", "BOTCHWEY JAMILA", "DANSO ANITA", "EDUFUWAAH ELIZABETH", "EWUSI ALICE", "EYI MONICA", "EYIA OKYEREWAAH ESTHER", "FRIMPONG MERCY", "LARDE ELIZABETH", "MFUM PORTIA", "OBOH JOYCE", "OFFEI CHARLLOTE", "OFORI PORTIA"][cite: 1],
+      "BUS": ["ABDUL YUSIF M", "AKAKPO ERNESTINE B.", "ANKOH SAMUEL", "ARAFAT MOHAMMED N", "FIADU DAVIS", "KUSSIEDU CHRISTIANA ATTA", "MENSAH SOLOMON", "NKRUMAH RACHEAL", "OPPONG STEPHEN J.", "YEBOA DAVID"][cite: 1],
+      "H/E 1A": ["ABOSI PRISCILLA", "ACQUAH SANDRA NYANTAKYIWAA", "ADOKOH PRISCILLA KEELSON", "AFFUL JESSICA ESSON", "AGBEZUKEY SUZANA", "AIDOO CIARAS KWATEMAA", "AIDOO REBECCA", "AKPASAH JOYCELYN", "AMAWUDA ERNESTINA", "AMISSAH PRISCILLA", "ANKRAH STELLA", "ANNING CECILIA", "APPIAH GIFTY", "APPIAH LUCKYCIA", "APPIAH ZITA", "APPIAH-KUBI PRISCILLA", "ARTHUR ABIGAIL", "ARTHUR REBECCA", "ASIMENU THEODORA", "ASSAN PRECIOUS DANSOWAA", "AYIKU MARY", "BAIDOO GRACE", "BEKLISI FREDA", "BIRIKORANG ANDYLOVE", "BOATENG DORIS SERWAA", "BUABENG LAWRENCIA", "DADZIE DORCAS", "DJABENG FREDERICA", "DONKOH ESTHER", "EDUFUL DEBORA", "ESSEL BLESSING", "ESSILIFIE DORCAS OGYABA", "GYAMFI FLORENCE", "KUMORDZI ABIGAIL", "KWETEY RHODA DELALI", "MENSAH ELIZABETH", "MENSAH EMMANUELLA", "NKUM GIFTY", "NKYI ESTHER", "OKYERE GLORIA", "OTOO SARAH", "OWUSU EDNA", "OWUSUWAA QUEENSTAR", "PRAH VIVIAN BLESSING", "QUAINOO GRACE AMA", "SENYO CHARLOTTE", "TAYLOR REBECCA EKUA", "YEMO ROSEMOND"][cite: 1],
+      "H/E 1B": ["Abakah NANA A. ELIZABETH", "Addo JANET", "ADUSE IRENE POKUA", "Agyekwaa JESSICA", "Amegatie DAVI YORSE ASPECT", "Amofa BERNICE", "Ananey BARTLEY FREDRICA", "Ankrah RUKIDA", "Anyina ELIZABETH", "Arthur GLADYS", "Arthur IKUA GIFTY", "ASABEA CHARITY", "Ayadzic NKUM JESSICA", "Ayisha SUMAILA", "Bentum ALBERTA", "Boasi OHEMA JACKLINE", "Bondzi GEORGINA", "Cudjoe CLARA", "Dapaah OPOKU CHRISTABEL", "Djan OPOREBEA MAGDALINE", "Donkor GEORGIATE PRINCESS", "Ekuban ELIZABETH", "INKOOM VERONICA", "Kekeli TREVE CHRISTABEL", "Kontoh GRACE", "KOTEI AMON QUEEN", "Mensah AFIA LYDINA", "Mensah AKOSUA ADWOA", "MENSAH LORDINA", "MENSAH LORDINA AKOSUA", "Mensah PRINCESS", "Milson BLESSING MABEL", "Montley MARY", "NYAME QUEENSTAR", "Nyarko NADIA", "OFORI RUTH", "OPPONG MABEL", "Osei RUTH", "OWUSU AGNES", "QUADIOO AGNES", "QUAINOO PRISCILLA", "SACKEY ABENA CLARA", "SEIDU COMFORT ADIZA", "WILLIAMS WENDY", "Yeboah ABIGAIL"][cite: 1],
+      "H/E 2A": ["ABAKAH MERCY", "ABEZUDOR ERICA", "ACKAH PRISCILLA", "ADOMAKO JANET ACHIAA", "ADUSEI OPHELIA", "AFFUL JUDITH", "AGYIRI AUGUSTINA", "AISHATU IBRAHIM", "AKONU CHRISTIANA", "AKUMANI MARGARET", "AKWAFUL CHRISTABEL", "AMISSAH REBECCA", "AMOAH GLADYS OFORIWAA", "AMPIAH VERONICA", "AMPOMAH ERICA", "ANOWAH THERESA", "APEDO-PEDRO CHRISTABEL", "ARHIN ANASTASIA", "ARHINFUL VIDA", "ARTHUR AFIDA ESI", "ARTHUR CHRISTINE", "ASIEKU EMILIA", "ATIVI BLESSING", "ATONTABA HELINA", "BABAE QUEENETH", "BAIDOO MARIAN ESI", "BAIDOO PEPERTUAL", "COLSON EUNICE", "CUDJOE BRIDGET", "DADZIE COMFORT", "DARKOH JESSICA BOADI", "ESSILFIE JULIANA", "ESSOUN FELICIA", "ESSUMAN BERNICE EFUA", "FOSU HANNAH", "FRIMPONG JOSEPHINE", "GYEKERBIA ELIZABETH", "GYEKYE SANDRA", "HAWKSON WENDY ARABA", "IMBEAH COMFORT NAANA", "LAMPTEY DOROTHY", "MANU LILLIAN", "MENSAH GLORIA", "MENSAH ANASTACIA", "MENSAH BETTY", "MENSAH GIFTY", "MENSAH GRACE", "MILLS ELIZABETH TAWIAH", "MONNEY RACHEAL JACHEBEB", "NDZIBAH EDENA", "NIFA ALICE", "ODURO MARY", "OFFEH NYARKO AKOSUA", "OFORI BERLINDA", "OFORI HENRIETTA", "OTENG CELINE", "OWUSU REBECCA", "RAZAK ANDELATU", "SAM MARTHA", "SAMPSON FELICIA", "SAWYERR CHARITABLE", "TAWIAH FRANCISCA", "THOMPSON GRACE"][cite: 1],
+      "H/E 2B": ["ABDULRAHMAN RUKAYA", "ACQUAH ABIGAIL", "ADANA GRACE", "AFRANE ELIZABETH A.", "AKYE HARRIET", "AMEDI VIVIAN AKORFA", "ARTHUR DIANA", "ARTHUR GRACE", "ARTHUR PRISCILLA", "ARTHUR SELINA BASSAW", "ARTHUR VERONICA", "AWOTWE GRACE", "BAIDOO NANCY", "BINNEY THERESA", "BOATENG CYNTHIA", "BUADU CINDY OBENG", "COBBINAH PRINCILLA", "COBBINEAH PRINELLA", "COBOHINAH BLESSING ADWOA", "DADZIE MARY", "DEBORAH RICHEAL", "ESHUN RITA", "ESSILFIE COMFORT", "ESSUMAN QUEEN VICTORIA", "ETHEL AVULETEH", "EWUSI COMFORT", "EYIAH LAWRENCIA", "FRIMPONG ESTHER ANANE", "FRIMPONG OWUSU FOFIE", "GIFTY OGYAE", "JOANITHA ASIRIFI", "KOBBINA HELINA", "KYERENTEMAA ASAMAH BERNICE", "LOIS KUMAH", "MANTEBEA CHRISTABEL", "MARGARET ABLANATSI", "MENSAH JULIANA", "MENSAH PATIENCE", "MENSAH PATRICIA", "MENSAH PAULINA", "NORVINYO BETTY SEFAKOR", "NYARKO EMELIA", "NYARKOH SANDRA OFORI", "OBENEWAA FRANCISCA", "OBOUFI FREDRICA", "OFORI EDWINA", "OFORI HENRIETTA", "OKYERE ANGELINA", "OKYERE ELIZABETH", "OWUSU LILIAN", "PRAH ANITA", "PRAH HANNAH", "PRINCESS NYARIELOH", "QUANI VERONICA", "QUARCOO SANDRA", "RITA KOOMSON", "SAMIRA AKODOGO", "TAWIAH REBECCA", "TAYLOR STEPHANIE", "TORTMATE WILSON OTREWURA", "TUUMASI MONICA", "YEBOAH FRANCISCA", "ZARATU SULE"][cite: 1],
+      "LANG": ["AKALJGA ELIZABETH NANA YAA", "ESHUN COMFORT", "GANTARA NAJAT", "MENSAH SUZANA", "OFORI MARY", "QUARSHIE EDITH DE-VOS", "SUMAILA AYISHATU", "TAWIAH HELINA", "YAWSON DOEZIAR"][cite: 1],
+      "SCI": ["ABDUL MAJID SAFIAN", "ACQUAH GRACE NANA ABA", "ADDY GABRIEL", "AFRANIE CLIFFORD", "AGYPONG DOMINIC", "AIDOO DESMOND", "AMOAKO PATRICIA", "ARMAH SAMUEL", "ARTHUR DEBORAH O", "ASARE BLESS", "BAIDOO EMMANUEL", "DOVLO MATILDA", "ESSEL EMMANUEL", "ESSIAMAH MARGARET", "GYASIE SOLOMON", "KONADU STEPHANIE", "KWARTENG PRINCE", "MENSAH EMELIA", "NUHU ALI", "OPPONG MARGARET LONGDON", "QUANSAH JAMES", "SEDDOH PRINCESS SELASI", "VISU REAHAEL"][cite: 1],
+      "V/A 1": ["ADAM IBRAHEEM", "ADDAE EBENEZER", "ADDO PHILIP", "ADZADZI HAYFORD KWAKU", "AGORDZO CHRISTIANA", "AIDOO THEOPHILUS", "AMPAADU OBED JUNIOUR", "AMPAH EMMANUEL KWAKU", "AMPONG KORANKYE", "ANTWI FOSU MECKIZADICK", "ANTWI PAUL", "ANYAN FELIX", "APPO PROSPER", "AWOTWE ISAAC", "BADU MANUEL", "BAIDEN RAYMOND", "BLANKSON GIDEON", "BOATENG EDWARD", "BOATENG OATHANIEL", "DANSO BERNARD", "DEBRAH GABRIEL", "ESSEL FRANCIS", "FORSON PROSPER", "FRIMPONG KWAME", "FUSEINI SALAMATU", "FYNN ENOCH", "GYAN STANLEY", "GYANKYE RUDOLF", "HACKMAN DERICK", "KAKRA SAMUEL", "MBEAH CHARITY", "MENSAH ABRAHAM", "MENSAH DAVID", "NEEQUAYE DANIEL", "NYARKO ALFRED", "OBENG MAXWELL", "ODUGBE EVANS", "OTOO DESMOND", "OWUSUWAA BLESSING", "QUANSAH NATHANIEL", "QUAYE ISAAC AYAA", "QUAYE JEFFERY", "SAM ISAAC", "SARFO KWABENA", "SEGLA SAMUEL", "TETTEH AUGUSTINE", "TIEKY GIDEON"][cite: 1],
+      "V/A 2": ["ADU MICHAEL", "AGYAH OBED", "AGYAPONG BENEDICTA", "AIDOO KENNETH", "AMEKY RICHARD", "AMETEPEY RICHARD", "AMISSAH ISHMAEL", "AMOAH ALBERT", "AMOAKO DESMOND", "ANDOH MESHACK", "APPIAH BISMARK", "APPIAH DENNIS", "ARTHUR EMMANUEL", "ASAMOAH NECTARIOS", "BAIDOO PATRICK", "BEDOR PATRICK", "BOTWEY ERNEST", "DADZIE RAPHAEL", "DARKO JULIUS", "EDUSAH NANCY", "GYAN ERNEST", "HACKMAN PRINCE", "HOPE GODFRED", "KONOSON CHRISTIAN", "KUSI SHADRACH", "MENSAH ENOCH", "MENSAH ISAAC FORSON", "MENSAH JOEL EMMANUEL", "NAUSEH ISAAC", "NUAMAH CHARLES ATTA", "NYARKO NICHOLAS", "OBENG WILLIAMS PAA KWESI", "ODAME MESHACH", "OPPARE RUTH ENYIFI", "OSEI FREDERICK", "OSEI PRECIOUS", "OWUSU BRIGHT", "PRINCE HACKMAN", "SACKEY ANGELINA", "SAM WENDY", "SETU MALVIN", "TALLEY FRANCIS TOKU", "TAWSON FREDRICK K.K", "TETTEH AUGUSTINE", "YUSIF NASIRU"][cite: 1]
+    };
+
+    let currentRosters = {};
+    let recordedScores = [];
+    let customSubjects = ["Computing", "ICT"];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadStorageData();
+      populateClassSelectors();
+      updateSubjectDropdown();
+      onClassChange();
+      applyFiltersAndRenderTable();
+      updateAnalyticsMetrics();
+      updateTotalRosterBadge();
+    });
+
+    function loadStorageData() {
+      const storedRosters = localStorage.getItem("ANASS_ROSTERS_2026");
+      if (storedRosters) {
+        try {
+          currentRosters = JSON.parse(storedRosters);
+        } catch(e) {
+          currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+        }
+      } else {
+        currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+        saveRostersToStorage();
+      }
+
+      const storedScores = localStorage.getItem("ANASS_SCORES_RECORDED");
+      if (storedScores) {
+        try {
+          recordedScores = JSON.parse(storedScores);
+        } catch(e) {
+          recordedScores = [];
+        }
+      }
+
+      const storedSubjects = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
+      if (storedSubjects) {
+        try {
+          customSubjects = JSON.parse(storedSubjects);
+        } catch(e) {
+          customSubjects = ["Computing", "ICT"];
+        }
+      }
+    }
+
+    function saveRostersToStorage() {
+      localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
+      updateTotalRosterBadge();
+    }
+
+    function saveScoresToStorage() {
+      localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
+    }
+
+    function saveSubjectsToStorage() {
+      localStorage.setItem("ANASS_CUSTOM_SUBJECTS", JSON.stringify(customSubjects));
+    }
+
+    function restorePortalDefaults() {
+      if (confirm("Reset all 15 class rosters back to the official 2025/2026 Portal List?")) {
+        currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+        saveRostersToStorage();
+        onClassChange();
+        renderModalRosterList();
+        showToast("Rosters reset to official 2025/2026 portal list!");
+      }
+    }
+
+    function updateTotalRosterBadge() {
+      let count = 0;
+      for (const cls in currentRosters) {
+        count += currentRosters[cls].length;
+      }
+      const badge = document.getElementById("navRosterCountBadge");
+      if (badge) badge.textContent = count;
+    }
+
+    function populateClassSelectors() {
+      const classSelect = document.getElementById("classSelect");
+      const filterClassSelect = document.getElementById("filterClassSelect");
+      const modalClassSelector = document.getElementById("modalClassSelector");
+
+      const classes = Object.keys(currentRosters);
+      classSelect.innerHTML = "";
+      filterClassSelect.innerHTML = '<option value="ALL">All Classes</option>';
+      modalClassSelector.innerHTML = "";
+
+      classes.forEach(c => {
+        classSelect.add(new Option(c, c));
+        filterClassSelect.add(new Option(c, c));
+        modalClassSelector.add(new Option(c, c));
+      });
+    }
+
+    function updateSubjectDropdown() {
+      const subjectSelect = document.getElementById("subjectSelect");
+      const filterSubjectSelect = document.getElementById("filterSubjectSelect");
+
+      subjectSelect.innerHTML = "";
+      filterSubjectSelect.innerHTML = '<option value="ALL">All Subjects</option>';
+
+      customSubjects.forEach(s => {
+        subjectSelect.add(new Option(s, s));
+        filterSubjectSelect.add(new Option(s, s));
+      });
+    }
+
+    function promptAddSubject() {
+      const newSub = prompt("Enter new Subject name:");
+      if (newSub && newSub.trim()) {
+        const trimmed = newSub.trim();
+        if (!customSubjects.includes(trimmed)) {
+          customSubjects.push(trimmed);
+          saveSubjectsToStorage();
+          updateSubjectDropdown();
+          document.getElementById("subjectSelect").value = trimmed;
+          showToast(`Subject "${trimmed}" added!`);
+        } else {
+          alert("This subject already exists in the list.");
+        }
+      }
+    }
+
+    function onClassChange() {
+      const selectedClass = document.getElementById("classSelect").value;
+      const studentSelect = document.getElementById("studentSelect");
+      const countBadge = document.getElementById("activeClassRosterCount");
+      const quickViewName = document.getElementById("quickViewClassName");
+      const quickList = document.getElementById("quickClassRosterList");
+
+      studentSelect.innerHTML = "";
+      const students = currentRosters[selectedClass] || [];
+      countBadge.textContent = `${students.length} Students`;
+      quickViewName.textContent = selectedClass;
+
+      if (students.length === 0) {
+        const placeholder = new Option("-- No students in this class --", "");
+        placeholder.disabled = true;
+        studentSelect.add(placeholder);
+        quickList.innerHTML = '<span class="text-slate-400 italic">No students currently enrolled.</span>';
+      } else {
+        students.forEach(student => studentSelect.add(new Option(student, student)));
+        quickList.innerHTML = students.map(st => 
+          `<span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">${st}</span>`
+        ).join("");
+      }
+    }
+
+    function calculateGrade(score) {
+      const s = parseFloat(score);
+      if (isNaN(s)) return { grade: "--", remark: "--", badgeColor: "bg-slate-100 text-slate-700 border-slate-300" };
+      if (s >= 80) return { grade: "A1", remark: "Excellent", badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+      if (s >= 75) return { grade: "B2", remark: "Very Good", badgeColor: "bg-teal-100 text-teal-800 border-teal-300" };
+      if (s >= 70) return { grade: "B3", remark: "Good", badgeColor: "bg-sky-100 text-sky-800 border-sky-300" };
+      if (s >= 65) return { grade: "C4", remark: "Credit", badgeColor: "bg-blue-100 text-blue-800 border-blue-300" };
+      if (s >= 60) return { grade: "C5", remark: "Credit", badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-300" };
+      if (s >= 55) return { grade: "C6", remark: "Credit", badgeColor: "bg-violet-100 text-violet-800 border-violet-300" };
+      if (s >= 50) return { grade: "D7", remark: "Pass", badgeColor: "bg-amber-100 text-amber-800 border-amber-300" };
+      if (s >= 45) return { grade: "E8", remark: "Pass", badgeColor: "bg-orange-100 text-orange-800 border-orange-300" };
+      return { grade: "F9", remark: "Fail", badgeColor: "bg-rose-100 text-rose-800 border-rose-300" };
+    }
+
+    function handleScoreInputPreview(val) {
+      const badge = document.getElementById("gradePreviewBadge");
+      const err = document.getElementById("scoreValidationMsg");
+      const score = parseFloat(val);
+
+      if (val === "" || isNaN(score)) {
+        badge.textContent = "Grade: --";
+        badge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600";
+        err.classList.add("hidden");
+        return;
+      }
+
+      if (score < 0 || score > 100) {
+        badge.textContent = "Invalid";
+        badge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700";
+        err.textContent = "Score must be between 0 and 100.";
+        err.classList.remove("hidden");
+        return;
+      }
+
+      err.classList.add("hidden");
+      const res = calculateGrade(score);
+      badge.textContent = `Grade: ${res.grade} (${res.remark})`;
+      badge.className = `text-xs font-bold px-2 py-0.5 rounded-full border ${res.badgeColor}`;
+    }
+
+    function handleScoreSubmit(e) {
+      e.preventDefault();
+      const subject = document.getElementById("subjectSelect").value;
+      const className = document.getElementById("classSelect").value;
+      const student = document.getElementById("studentSelect").value;
+      const scoreVal = parseFloat(document.getElementById("scoreInput").value);
+      const remarkInput = document.getElementById("remarkInput").value.trim();
+
+      if (!student) {
+        alert("Please select or add a student first.");
+        return;
+      }
+
+      if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 100) {
+        alert("Please enter a valid score between 0 and 100.");
+        return;
+      }
+
+      const gradeInfo = calculateGrade(scoreVal);
+      const remark = remarkInput || gradeInfo.remark;
+
+      const existingIndex = recordedScores.findIndex(
+        entry => entry.student === student && entry.className === className && entry.subject === subject
+      );
+
+      const recordItem = {
+        id: existingIndex > -1 ? recordedScores[existingIndex].id : "REC-" + Date.now(),
+        student,
+        className,
+        subject,
+        score: scoreVal,
+        grade: gradeInfo.grade,
+        remark,
+        timestamp: new Date().toLocaleString()
+      };
+
+      if (existingIndex > -1) {
+        recordedScores[existingIndex] = recordItem;
+        showToast(`Updated ${student}: ${scoreVal}`);
+      } else {
+        recordedScores.unshift(recordItem);
+        showToast(`Saved ${student}: ${scoreVal} (${gradeInfo.grade})`);
+      }
+
+      saveScoresToStorage();
+      applyFiltersAndRenderTable();
+      updateAnalyticsMetrics();
+
+      document.getElementById("scoreInput").value = "";
+      document.getElementById("remarkInput").value = "";
+      handleScoreInputPreview("");
+      document.getElementById("scoreInput").focus();
+    }
+
+    function resetEntryForm() {
+      document.getElementById("scoreEntryForm").reset();
+      handleScoreInputPreview("");
+      onClassChange();
+    }
+
+    function applyFiltersAndRenderTable() {
+      const filterClass = document.getElementById("filterClassSelect").value;
+      const filterSubject = document.getElementById("filterSubjectSelect").value;
+      const searchTerm = document.getElementById("searchStudentInput").value.toLowerCase().trim();
+
+      const tbody = document.getElementById("scoreLedgerBody");
+      const emptyNotice = document.getElementById("noRecordsNotice");
+      const countBadge = document.getElementById("filteredRecordCount");
+
+      const filtered = recordedScores.filter(rec => {
+        const matchClass = filterClass === "ALL" || rec.className === filterClass;
+        const matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
+        const matchSearch = searchTerm === "" || rec.student.toLowerCase().includes(searchTerm);
+        return matchClass && matchSubject && matchSearch;
+      });
+
+      countBadge.textContent = `${filtered.length} entries`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = "";
+        emptyNotice.classList.remove("hidden");
+        return;
+      }
+
+      emptyNotice.classList.add("hidden");
+      tbody.innerHTML = filtered.map((rec, index) => {
+        const gradeBadge = calculateGrade(rec.score).badgeColor;
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="py-2.5 px-3.5 text-xs text-slate-400 font-mono">${index + 1}</td>
+            <td class="py-2.5 px-3.5 font-bold text-slate-800 text-xs sm:text-sm">${rec.student}</td>
+            <td class="py-2.5 px-3.5"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200">${rec.className}</span></td>
+            <td class="py-2.5 px-3.5 text-xs font-semibold text-slate-700">${rec.subject}</td>
+            <td class="py-2.5 px-3.5 text-right font-black font-mono text-sm text-slate-800">${rec.score.toFixed(1)}</td>
+            <td class="py-2.5 px-3.5 text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold border ${gradeBadge}">
+                ${rec.grade}
+              </span>
+            </td>
+            <td class="py-2.5 px-3.5 text-xs text-slate-600">${rec.remark}</td>
+            <td class="py-2.5 px-3.5 text-center">
+              <button onclick="deleteScoreEntry('${rec.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 transition" title="Delete record">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function deleteScoreEntry(id) {
+      if (confirm("Remove this score record?")) {
+        recordedScores = recordedScores.filter(r => r.id !== id);
+        saveScoresToStorage();
+        applyFiltersAndRenderTable();
+        updateAnalyticsMetrics();
+        showToast("Record removed.");
+      }
+    }
+
+    function confirmClearAllRecords() {
+      if (recordedScores.length === 0) {
+        alert("There are no records to clear.");
+        return;
+      }
+      if (confirm("Delete ALL score records? This cannot be undone.")) {
+        recordedScores = [];
+        saveScoresToStorage();
+        applyFiltersAndRenderTable();
+        updateAnalyticsMetrics();
+        showToast("All score records cleared.");
+      }
+    }
+
+    function updateAnalyticsMetrics() {
+      const totalCount = recordedScores.length;
+      document.getElementById("metricTotalEntries").textContent = totalCount;
+
+      if (totalCount === 0) {
+        document.getElementById("metricClassAverage").textContent = "0.0";
+        document.getElementById("metricHighestScore").textContent = "0.0";
+        document.getElementById("metricHighestStudent").textContent = "None";
+        document.getElementById("metricPassRate").textContent = "0%";
+        return;
+      }
+
+      const sum = recordedScores.reduce((acc, cur) => acc + cur.score, 0);
+      document.getElementById("metricClassAverage").textContent = (sum / totalCount).toFixed(1);
+
+      let highest = recordedScores[0];
+      let passes = 0;
+      recordedScores.forEach(rec => {
+        if (rec.score > highest.score) highest = rec;
+        if (rec.score >= 50) passes++;
+      });
+
+      document.getElementById("metricHighestScore").textContent = highest.score.toFixed(1);
+      document.getElementById("metricHighestStudent").textContent = highest.student;
+      document.getElementById("metricPassRate").textContent = `${((passes / totalCount) * 100).toFixed(0)}%`;
+    }
+
+    function openRosterModal(targetClass = null) {
+      const modal = document.getElementById("rosterModal");
+      const selector = document.getElementById("modalClassSelector");
+      if (targetClass && currentRosters[targetClass]) {
+        selector.value = targetClass;
+      } else {
+        selector.value = document.getElementById("classSelect").value || "AGRIC";
+      }
+      renderModalRosterList();
+      modal.classList.remove("hidden");
+    }
+
+    function closeRosterModal() {
+      document.getElementById("rosterModal").classList.add("hidden");
+      onClassChange();
+    }
+
+    function openClassRosterQuickEdit() {
+      openRosterModal(document.getElementById("classSelect").value);
+    }
+
+    function openQuickAddStudentModal() {
+      const cls = document.getElementById("classSelect").value;
+      const newName = prompt(`Enter student name for ${cls}:`);
+      if (newName && newName.trim()) {
+        addStudentToClass(cls, newName.trim());
+      }
+    }
+
+    function renderModalRosterList() {
+      const activeClass = document.getElementById("modalClassSelector").value;
+      const label = document.getElementById("modalAddClassLabel");
+      const countEl = document.getElementById("modalClassCount");
+      const listEl = document.getElementById("modalRosterItemsList");
+      const filter = document.getElementById("modalRosterFilter").value.toLowerCase().trim();
+
+      label.textContent = activeClass;
+      const students = currentRosters[activeClass] || [];
+      countEl.textContent = `${students.length} Students`;
+
+      const filtered = students.filter(st => filter === "" || st.toLowerCase().includes(filter));
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<li class="p-4 text-center text-xs text-slate-400">No matching students found in ${activeClass}.</li>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((st, idx) => {
+        return `
+          <li class="px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-50 transition">
+            <span class="font-semibold text-slate-800 text-xs sm:text-sm flex items-center gap-2">
+              <span class="text-slate-400 font-mono text-[11px] w-5">${idx + 1}.</span>
+              <span>${st}</span>
+            </span>
+            <button onclick="removeStudentFromModalClass('${activeClass}', '${st.replace(/'/g, "\\'")}')" class="px-2 py-1 text-slate-400 hover:text-rose-600 rounded text-xs transition" title="Remove student">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </li>
+        `;
+      }).join("");
+    }
+
+    function addNewStudentToModalClass() {
+      const activeClass = document.getElementById("modalClassSelector").value;
+      const input = document.getElementById("newStudentNameInput");
+      const name = input.value.trim();
+      const errEl = document.getElementById("modalRosterErrorMsg");
+
+      if (!name) {
+        errEl.textContent = "Please enter a student name.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      if (addStudentToClass(activeClass, name)) {
+        input.value = "";
+        errEl.classList.add("hidden");
+        renderModalRosterList();
+      }
+    }
+
+    function addStudentToClass(className, studentName) {
+      const upperName = studentName.trim().toUpperCase();
+      if (!currentRosters[className]) currentRosters[className] = [];
+
+      const exists = currentRosters[className].some(s => s.toUpperCase() === upperName);
+      if (exists) {
+        alert(`Student "${upperName}" is already enrolled in ${className}.`);
+        return false;
+      }
+
+      currentRosters[className].push(upperName);
+      currentRosters[className].sort();
+      saveRostersToStorage();
+      onClassChange();
+      showToast(`Added ${upperName} to ${className}!`);
+      return true;
+    }
+
+    function removeStudentFromModalClass(className, studentName) {
+      if (confirm(`Remove "${studentName}" from ${className}?`)) {
+        currentRosters[className] = currentRosters[className].filter(s => s !== studentName);
+        saveRostersToStorage();
+        renderModalRosterList();
+        onClassChange();
+        showToast(`Removed ${studentName}.`);
+      }
+    }
+
+    function exportToExcel() {
+      if (recordedScores.length === 0) {
+        alert("No exam records to export.");
+        return;
+      }
+
+      const filterClass = document.getElementById("filterClassSelect").value;
+      const filterSubject = document.getElementById("filterSubjectSelect").value;
+
+      const dataToExport = recordedScores.filter(rec => {
+        const matchClass = filterClass === "ALL" || rec.className === filterClass;
+        const matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
+        return matchClass && matchSubject;
+      });
+
+      if (dataToExport.length === 0) {
+        alert("No records match the active filters.");
+        return;
+      }
+
+      const sheetData = dataToExport.map((item, idx) => ({
+        "No.": idx + 1,
+        "Student Name": item.student,
+        "Class": item.className,
+        "Subject": item.subject,
+        "Score (/100)": item.score,
+        "Grade": item.grade,
+        "Teacher Remarks": item.remark,
+        "Timestamp Recorded": item.timestamp
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+
+      ws["!cols"] = [
+        { wch: 6 },
+        { wch: 32 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 10 },
+        { wch: 28 },
+        { wch: 22 }
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Exam Scores");
+
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const classTag = filterClass === "ALL" ? "All_Classes" : filterClass.replace(/\s+/g, "_");
+      const subjectTag = filterSubject === "ALL" ? "All_Subjects" : filterSubject.replace(/\s+/g, "_");
+      const filename = `ANASS_ScorePortal_${classTag}_${subjectTag}_${timestamp}.xlsx`;
+
+      XLSX.writeFile(wb, filename);
+      showToast(`Exported ${dataToExport.length} records!`);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toastNotification");
+      const msg = document.getElementById("toastMessage");
+      msg.textContent = message;
+      toast.classList.remove("translate-y-24", "opacity-0");
+      toast.classList.add("translate-y-0", "opacity-100");
+
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-24", "opacity-0");
+      }, 2800);
+    }
+  </script>
+</body>
+</html>

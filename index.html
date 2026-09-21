@@ -69,15 +69,19 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button onclick="openRosterModal()" class="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-2 border border-emerald-600 shadow-sm active:scale-95">
+        <button onclick="openSyncSettingsModal()" class="px-3 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 border border-emerald-600 shadow-sm active:scale-95" title="Configure Google Sheets Webhook URL">
+          <i class="fa-solid fa-table text-emerald-300"></i>
+          <span class="hidden sm:inline">Sheet Sync</span>
+          <span id="sheetSyncDot" class="w-2 h-2 rounded-full bg-rose-400"></span>
+        </button>
+        <button onclick="openRosterModal()" class="px-3 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 border border-emerald-600 shadow-sm active:scale-95">
           <i class="fa-solid fa-users-gear text-emerald-300"></i>
           <span>Rosters</span>
-          <span id="navRosterCountBadge" class="bg-emerald-900 text-emerald-200 text-[11px] px-2 py-0.5 rounded-full font-mono">662</span>
+          <span id="navRosterCountBadge" class="bg-emerald-900 text-emerald-200 text-[11px] px-1.5 py-0.5 rounded-full font-mono">662</span>
         </button>
-        <button onclick="exportToExcel()" class="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-sm active:scale-95">
+        <button onclick="exportToExcel()" class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
           <i class="fa-solid fa-file-excel"></i>
-          <span class="hidden sm:inline">Export Scores (.xlsx)</span>
-          <span class="sm:hidden">Excel</span>
+          <span class="hidden sm:inline">Excel</span>
         </button>
       </div>
     </div>
@@ -97,7 +101,7 @@
             </span>
             <div>
               <h2 class="font-bold text-slate-800 text-base">Record Exam Score</h2>
-              <p class="text-xs text-slate-500">Enter and validate examination marks</p>
+              <p class="text-xs text-slate-500">Live sync to Google Sheet &amp; Local storage</p>
             </div>
           </div>
           <span id="activeClassRosterCount" class="text-xs font-semibold px-2.5 py-1 bg-slate-200/70 text-slate-700 rounded-full font-mono">
@@ -198,7 +202,7 @@
             <p id="scoreValidationMsg" class="text-xs text-rose-600 font-semibold mt-1 hidden"></p>
           </div>
 
-          <!-- Teacher Remarks -->
+          <!-- Remarks -->
           <div>
             <label for="remarkInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
               Teacher Remarks (Optional)
@@ -211,11 +215,11 @@
             />
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Submit Button with Sync Loading State -->
           <div class="pt-2 flex items-center gap-3">
-            <button type="submit" class="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wide shadow-md shadow-emerald-700/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-              <span>Save &amp; Record Score</span>
+            <button type="submit" id="submitBtn" class="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wide shadow-md shadow-emerald-700/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+              <i id="submitBtnIcon" class="fa-solid fa-cloud-arrow-up"></i>
+              <span id="submitBtnText">Save &amp; Sync Score</span>
             </button>
             <button type="button" onclick="resetEntryForm()" class="p-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition active:scale-95" title="Clear form">
               <i class="fa-solid fa-rotate-left"></i>
@@ -309,7 +313,7 @@
               <span>Exam Score Ledger</span>
               <span id="filteredRecordCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">0</span>
             </h2>
-            <p class="text-xs text-slate-500">Export filtered records directly to Excel</p>
+            <p class="text-xs text-slate-500">Synced to Google Sheets and exported to Excel</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -367,7 +371,7 @@
         </div>
 
         <div class="p-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
-          <span>Storage: <strong>Browser Local Storage</strong></span>
+          <span id="syncStatusSummary">Status: <strong>Ready to sync</strong></span>
           <button onclick="confirmClearAllRecords()" class="text-rose-600 hover:text-rose-700 font-semibold text-xs flex items-center gap-1">
             <i class="fa-solid fa-trash-can"></i> Clear All Scores
           </button>
@@ -377,6 +381,42 @@
 
     </div>
   </main>
+
+  <!-- MODAL: Google Sheet Webhook Sync Settings -->
+  <div id="syncModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <i class="fa-solid fa-table"></i>
+          </div>
+          <h3 class="font-bold text-base text-slate-800">Google Sheet Connection</h3>
+        </div>
+        <button onclick="closeSyncSettingsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        Paste your Google Apps Script <strong>Web App URL</strong> below to automatically send and update scores in your Google Sheet spreadsheet:
+      </p>
+
+      <div class="mb-4">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Web App Exec URL</label>
+        <input 
+          type="url" 
+          id="scriptUrlInput" 
+          placeholder="https://script.google.com/macros/s/.../exec" 
+          class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <button onclick="closeSyncSettingsModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="saveSyncSettings()" class="px-4 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg shadow-sm">Save Connection</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: Class Roster Management -->
   <div id="rosterModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -469,8 +509,11 @@
     <span id="toastMessage">Score recorded successfully!</span>
   </div>
 
-  <!-- Pure JavaScript Application Logic -->
+  <!-- Application Logic -->
   <script>
+    // Set your Google Apps Script Web App URL below:
+    var GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxodvABFWCGzWi1ZSU36b2vNNfSkeSGPAfh4Q7RVMpjB3GJiE7dTkKZXyECiOcUFkif/exec";
+
     // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
@@ -654,8 +697,14 @@
     var recordedScores = [];
     var customSubjects = ["Computing", "ICT"];
 
-    // Initialize application state
     function initializePortal() {
+      // Check for saved Web App URL in localStorage
+      var savedUrl = localStorage.getItem("ANASS_SHEET_WEBAPP_URL");
+      if (savedUrl) {
+        GOOGLE_SHEET_WEBAPP_URL = savedUrl;
+      }
+      updateSyncStatusUI();
+
       try {
         var savedRosters = localStorage.getItem("ANASS_ROSTERS_2026");
         if (savedRosters) {
@@ -684,13 +733,54 @@
         if (savedSubs) customSubjects = JSON.parse(savedSubs);
       } catch (e) { customSubjects = ["Computing", "ICT"]; }
 
-      // Populate interface elements
       populateClassSelectors();
       updateSubjectDropdown();
       onClassChange();
       applyFiltersAndRenderTable();
       updateAnalyticsMetrics();
       updateTotalRosterBadge();
+    }
+
+    function updateSyncStatusUI() {
+      var dot = document.getElementById("sheetSyncDot");
+      var summary = document.getElementById("syncStatusSummary");
+      var isValidUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.indexOf("https://script.google.com/macros/s/") === 0;
+
+      if (isValidUrl) {
+        if (dot) {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+          dot.title = "Connected to Google Sheets";
+        }
+        if (summary) summary.innerHTML = 'Status: <strong class="text-emerald-700">Connected to Google Sheets</strong>';
+      } else {
+        if (dot) {
+          dot.className = "w-2 h-2 rounded-full bg-amber-400";
+          dot.title = "Click Sheet Sync to connect Web App URL";
+        }
+        if (summary) summary.innerHTML = 'Status: <span class="text-amber-700">Offline / Local only (Configure Sheet Sync to link)</span>';
+      }
+    }
+
+    function openSyncSettingsModal() {
+      document.getElementById("scriptUrlInput").value = GOOGLE_SHEET_WEBAPP_URL.indexOf("PASTE_YOUR") === -1 ? GOOGLE_SHEET_WEBAPP_URL : "";
+      document.getElementById("syncModal").classList.remove("hidden");
+    }
+
+    function closeSyncSettingsModal() {
+      document.getElementById("syncModal").classList.add("hidden");
+    }
+
+    function saveSyncSettings() {
+      var url = document.getElementById("scriptUrlInput").value.trim();
+      if (url && url.indexOf("https://script.google.com/macros/s/") === 0) {
+        GOOGLE_SHEET_WEBAPP_URL = url;
+        localStorage.setItem("ANASS_SHEET_WEBAPP_URL", url);
+        updateSyncStatusUI();
+        closeSyncSettingsModal();
+        showToast("Google Sheet URL connected successfully!");
+      } else {
+        alert("Please enter a valid Google Apps Script Web App URL (starts with https://script.google.com/macros/s/...)");
+      }
     }
 
     function populateClassSelectors() {
@@ -816,6 +906,7 @@
       badge.className = "text-xs font-bold px-2 py-0.5 rounded-full border " + res.badgeColor;
     }
 
+    // Submission handler with Google Sheets Webhook Sync
     function handleScoreSubmit(e) {
       e.preventDefault();
       var subject = document.getElementById("subjectSelect").value;
@@ -836,6 +927,7 @@
 
       var gradeInfo = calculateGrade(scoreVal);
       var remark = remarkInput || gradeInfo.remark;
+      var timestamp = new Date().toLocaleString();
 
       var existingIndex = -1;
       for (var i = 0; i < recordedScores.length; i++) {
@@ -853,25 +945,56 @@
         score: scoreVal,
         grade: gradeInfo.grade,
         remark: remark,
-        timestamp: new Date().toLocaleString()
+        timestamp: timestamp
       };
 
+      // Save locally first
       if (existingIndex > -1) {
         recordedScores[existingIndex] = recordItem;
-        showToast("Updated " + student + ": " + scoreVal);
       } else {
         recordedScores.unshift(recordItem);
-        showToast("Saved " + student + ": " + scoreVal + " (" + gradeInfo.grade + ")");
       }
-
       localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
       applyFiltersAndRenderTable();
       updateAnalyticsMetrics();
 
+      // Clear input fields immediately for fast workflow
       document.getElementById("scoreInput").value = "";
       document.getElementById("remarkInput").value = "";
       handleScoreInputPreview("");
       document.getElementById("scoreInput").focus();
+
+      // Sync to Google Sheets if Webhook URL is configured
+      var isValidUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.indexOf("https://script.google.com/macros/s/") === 0;
+
+      if (isValidUrl) {
+        var submitBtn = document.getElementById("submitBtn");
+        var btnText = document.getElementById("submitBtnText");
+        var btnIcon = document.getElementById("submitBtnIcon");
+
+        btnText.textContent = "Syncing to Sheet...";
+        btnIcon.className = "fa-solid fa-spinner fa-spin";
+
+        fetch(GOOGLE_SHEET_WEBAPP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(recordItem)
+        })
+        .then(function() {
+          btnText.textContent = "Save & Sync Score";
+          btnIcon.className = "fa-solid fa-cloud-arrow-up";
+          showToast("Saved & Synced to Google Sheet: " + student + " (" + scoreVal + ")");
+        })
+        .catch(function(err) {
+          btnText.textContent = "Save & Sync Score";
+          btnIcon.className = "fa-solid fa-cloud-arrow-up";
+          console.error("Sheet sync error:", err);
+          showToast("Saved locally. (Sheet sync failed - check connection)");
+        });
+      } else {
+        showToast("Saved locally: " + student + " (" + scoreVal + ")");
+      }
     }
 
     function resetEntryForm() {
@@ -1177,7 +1300,6 @@
       }, 2800);
     }
 
-    // Run portal initialization immediately
     initializePortal();
   </script>
 </body>

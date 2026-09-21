@@ -469,152 +469,307 @@
     <span id="toastMessage">Score recorded successfully!</span>
   </div>
 
-  <!-- Application Logic -->
+  <!-- Pure JavaScript Application Logic -->
   <script>
     // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      window.addEventListener('load', function() {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('SW Registered:', reg.scope))
-          .catch(err => console.log('SW Registration failed:', err));
+          .then(function(reg) { console.log('SW Registered'); })
+          .catch(function(err) { console.log('SW Registration error', err); });
       });
     }
 
-    // Default Rosters from official 2025.26 portal spreadsheet
-    const DEFAULT_ROSTERS = {
-      "AGRIC": ["ABBAM GODFRED", "ACQUAH ANTOINETTE", "ACQUAH BENJAMIN", "ACQUAH PATRICK", "AFFEL KINGSLEY", "AGYEKUM GLADYS", "AGYEMPONG VICTORIA", "AIDOO ANGELA", "AMOAH FRANCIS", "ANSAH BRIGHT", "ANSAH TEBOAH RICHARD", "ARKO ESTHER", "ARTHUR EBENEZER", "ARTHUR TEBOAH PRISCILLA", "ATUM OHENEWA KAREEM", "BAAH MARIO GIFT", "BAAH SAMSON", "BADU ANAMAN WILLIAM", "BADUR KYEI ELLIS", "BOATENG OWUSU BELINDA", "BOTWEY ALBERT NANA YAW", "BOTWEY DANIEL", "DADZIE SAMUEL", "ESHUN GLORIA", "GAMBA BISMARK", "ISSAH RASHID", "MANU EMMANUEL", "MARFO GIFTY BAAH", "MENSAH BRIGHT OSEI", "MENSAH DEBORAH", "MENSAH ISAAC", "MENSAH THOMAS", "NICHE GOODLUCK", "NSOWAH VERA", "ODOOM DORIS", "OFOSU PASCAL JOEL", "OKYERE AUGUSTINE", "OPARE RICHARD", "OPPONG GLORIA", "QUANSAH EBENEZER", "SACKEY JOSEPH", "SOFORTE MAWUNYO AMANDA", "TEBOAH SANDRA", "YAMOAH ERNEST", "YEBOAH ASANTE KWEKU"][cite: 1],
-      "ARTS 1": ["ABBAN SILAS", "ADJEI DANIEL", "AFFUL REGINA", "AGGREY GIFTY NHYIRABA", "AGGREY STEPHANIE", "AGYAPONG PRISCILLA", "AHIANYO BENEDICTA", "AIDOO EMMANUELLA AYEH", "AMEDUME EUNICE", "AMOAH EBENEZER", "AMOAH PRISCILLA", "AMOASI JESSICA", "AMPADU OBED SENIOR", "ANOWAH THERESAH", "APPIAH JOANA", "ARHIN NICHOLAS", "ARTHUR EMMANUEL", "ASANTE CHRISTABEL GYAMFUWAA", "ASANTE EDWIN OSEW", "ATAMALE EDNA LAMISI", "ATITSO CATHERINE KEKELI", "ATWER RICHARD", "AZALOO AUGUSTINA DZIDEDI", "BAAH VINCENT", "BAFFOE KATE ANTWI", "BEDIAKO EDWARD", "BOADU SAMUEL MENSAH", "BOTCHWEY EMMANUEL", "BOTWEY GERRARD MENSAH", "CLOTTEY ESTHER", "COFFIE ALEXANDER", "DADZIE PRISCILLA", "DANSO PAULINA AKUA AKYAA", "DONKOH JAMES", "DUMENYAH ISABELLA VERA KLENAM YAWO", "EGBUABA RITA AMARA", "ENTSIL LETICIA KORANKYEWAA", "ESSAH-QUARM YVONNE YEDIE", "ESSEL EKOW NANA", "FRIMPONG GEORGINA", "FUSEINI YASMINATU", "IDUN EMILY BAIDOO", "INTISIFUL SOPHIA", "JORBUNO CLIFFORD SEI", "KAKRABA CHRISTOPHER ENCHIL KWEKU", "KARIMATU MOHAMMED", "KUMAH BLESSING", "KUSSIEDU CHRISTIAN LAWEH", "KUUNIBE ZUVIEL JUDITH", "KWEGYIR EVANS", "LAMPTEY MAAJULIE", "MARRIAM LARRY", "MAWUSI CHRISTIANA", "MENSAH EVANS", "MENSAH JOANA", "MENSAH VERA", "NHYIRA JOANA", "NTIM DESMOND OPOKU", "OBOSU ROSALINDA", "OKAITEI ENOCH NATTEY", "OSEI SYRIA", "OSSEW EDWARD ASANTE", "PRAH VICENTIA BAIDOO", "QUAINOO EMMANUEL", "QUAINOO FELIX", "ROBERTSON DORA", "SACKEY ANGELINA", "SACKEY GRACE TWUMWAA", "SADIA DAUDA", "TAKYI WINIFRED", "YEBOAH ELIZABETH", "YEVU ESTHER", "ZURFAWU MOHAMMED"][cite: 1],
-      "ARTS 2A": ["ACKAAH BEATRICE", "ACKWERH GIDEON", "ACQUAH BARIKISU BADUA", "ACQUAH EVELYN", "ADIKAH ERIC", "ADJEI ISAAC", "AFFRIM HENRY NYAMEKYE JNR.", "AGYIR EMELIA", "AIDOO JOHN", "AMUZU PHANNUEL", "ANIM ALFREDA OHEMAA", "ANTWIWAA ELIZABETH BARBARA", "ANTWIWAAH AGYEMANG E. BOTAH", "APPIAH EMMANUEL", "ARTHUR CINDY", "ARTHUR STEPHEN", "ASAMOAH KINGSFORD", "ASANTE-ACQUAH JOEL", "ASARE JOSHUA", "ASEIDU PRINCE MENSAH", "ASIAMAH GRACE", "AYIAH ENOCH", "BAFFOUR SAMUEL", "BAIDOO EMMANUEL", "BARYEE ERICA ALICE SLEWRO", "BOAFO ABRAHAM", "BOTCHWAY CHRISTABEL", "DADZIE SYLVESTER", "DANKWAH VICENTIA", "EFFAH-OWUSU SHIRLEY AMOAKOWAA", "GBEBLEWU PRISCILLA", "GYAMFI BISMARK", "JAJAH HAFSATU MUTAWUHLU", "KAFARI DAISY", "KLUTSE DOROTHY", "KOOMSON LYDIA", "KYEI ABIGAIL NHYIRA BOATEMAA", "KYEREWA YAWSON BLESSING", "LAMPTEY JESSICA", "MENSAH CHARITY", "MENSAH WINNIFRED EDUAH", "NDEGO FAUSTINA", "NIFA ESTHER AMOANOO", "NKPANBI MARY", "NKPANBI MARY", "NUNOO JACOB AKUETEH", "OFORI EDWINA", "PAINTSIL EDNA", "SAM JENNIFER MILLS", "SHAIBU SADIK ABUBAKAR", "TABOH RICHARD", "WILLIAMS VERA YAYRA", "YUSSIF DANJUMAH"][cite: 1],
-      "ARTS 2B": ["ABANO FLORENCE", "ABEKA ENNIN LETICIA", "ADIAKO FELIX", "ADU APOH CHARLOTTE", "AFFIAMOAH IVY TSIBU", "AFFOH JESSICA", "AFFOH JESSICA", "AIDOO EMMANUEL", "AKYAA OWUSU EDMUNDS", "ALELOEY ELINICE", "AMADAKO HARRIET", "AMARE PRINCE", "AMENUVOR ISAAC", "AMOAH THOMAS", "AMOAMA CHRIS", "ANNAH DAVID", "ANNOR MAYBEL", "APPAU JUSTICE", "ARMAH NOARA N.A", "ARMAH NORA N.A", "ARMAH NORA NAA AYELLEY", "ARTHUR GIFTY", "ASAKE STEPHEN", "ASAMPANA PRISCILLA AWOKA", "ATAKPA MARTHA", "ATILA WISDOM", "ATTA INISMAN", "AWUAH SAMIRATU", "AYENSU RUTH", "BAIDOO BISMARK", "BAIDOO HENRY", "BEGYINA RICHARD", "BINEY CORNELIUS", "COFFIE REGINA NAA CHARNOR", "DAKOH VICTORIA ENYONAM", "DONKOR NANA YAA NANCY", "EBOAH MARY", "ESHUN JOSEPH HARRISON", "ESSUMAN SAMPSON", "GBOGBO MAWUTOR JESSICA", "KWAKYE GIFTY", "LAMPTEY ANNABEL K.T", "LAMPTEY BLESSING", "MENSAH CELESTINA", "MENSAH HENRY OSEI", "MENSAH MARY", "NKUM SHERIFFE", "OBOH CHRISTABEL", "OHENE BRIDGET", "OHENE RICHMOND", "OPOKU VERA YAA", "OTABIL BISMARK", "OWENE BRIGHT", "QUAINOO MARY", "TIMO EUGENE", "YEBOAH YVONNE"][cite: 1],
-      "ARTS 3": ["ADJEWUNAH JOYCE", "AKOMANYI STEPHENIE", "AMOAH HANNAH", "AMOAKO MATILDA", "ANDOH STEPHEN", "ANKOMAH NANA AFARI", "ANSAH VICENTIA", "APPIAH MICHELLE NHYIRA", "APPIAH MIMI NHYIRA", "APPU MARY", "ARTHUR PATIENCE", "ASAMOAH FRANCISCA NKRUMAH", "ASAMOAH JOYCE", "ATENSU HILDA", "AYENSU HILDA", "AYITEY BENEDICTA", "AYITEY ELIZABETH", "BOADI MATILDA", "BOAFOAH MARY", "BOTWEY PRINCE", "DADZIE JOSHUA", "DANSO BRIGHT", "DANSO PATIENCE", "DONKOR BENEDICTA", "DONKOR MATILDA", "DUODU PRISCILLA", "EDUMADZE EUNICE", "EFFUM REBECCA", "ENTSIE EMMANUEL", "FOSU KELVIN", "FRIMPONG FRANCIS", "GYAN EUNICE", "KORANKYE FRANCIS", "KRAMPAH PRISCILLA", "KUMI PATIENCE", "KUSI AGNES", "KUSI DANIEL", "KYEI VERONICA", "MINTAH ADELAIDE", "MINTAH CHARITY", "MINTAH JANET", "MINTAH MERCY", "MINTAH PORTIA", "MINTAH ROSEMOND", "MOHAMMED SUWEIBATU", "NDUR JOSHUA", "NINSON REBECCA", "NKRUMAH ERNESTINA", "NKANSAH EMMANUEL", "NYAMEKYE ERNEST", "OFORI AGNES", "OFORI GIFTY", "OPOKU EBENEZER", "OSEI ISAAC", "QUAYE ENOCH", "QUAYE JOYCE", "SARPONG AGNES", "TAKYI BRIGHT", "WONKYI ELIZABETH"],
-      "ARTS 4": ["ABOAGYEWAA ABIGAIL ETEIR", "AMOASI CECILIA", "ANAFO PATRICK", "ANDOH CHRISTABEL", "APPIAH THERESAH", "ASAMOAH KINGSLEY", "ASANTE CECILIA", "BADU AUGUSTINE BOAKO", "BAIDOO EMMACULATE NYARKOAH", "BOATENG IRENE", "BODUAH DENNIS", "BOTCHWEY JAMILA", "DANSO ANITA", "EDUFUWAAH ELIZABETH", "EWUSI ALICE", "EYI MONICA", "EYIA OKYEREWAAH ESTHER", "FRIMPONG MERCY", "LARDE ELIZABETH", "MFUM PORTIA", "OBOH JOYCE", "OFFEI CHARLLOTE", "OFORI PORTIA"][cite: 1],
-      "BUS": ["ABDUL YUSIF M", "AKAKPO ERNESTINE B.", "ANKOH SAMUEL", "ARAFAT MOHAMMED N", "FIADU DAVIS", "KUSSIEDU CHRISTIANA ATTA", "MENSAH SOLOMON", "NKRUMAH RACHEAL", "OPPONG STEPHEN J.", "YEBOA DAVID"][cite: 1],
-      "H/E 1A": ["ABOSI PRISCILLA", "ACQUAH SANDRA NYANTAKYIWAA", "ADOKOH PRISCILLA KEELSON", "AFFUL JESSICA ESSON", "AGBEZUKEY SUZANA", "AIDOO CIARAS KWATEMAA", "AIDOO REBECCA", "AKPASAH JOYCELYN", "AMAWUDA ERNESTINA", "AMISSAH PRISCILLA", "ANKRAH STELLA", "ANNING CECILIA", "APPIAH GIFTY", "APPIAH LUCKYCIA", "APPIAH ZITA", "APPIAH-KUBI PRISCILLA", "ARTHUR ABIGAIL", "ARTHUR REBECCA", "ASIMENU THEODORA", "ASSAN PRECIOUS DANSOWAA", "AYIKU MARY", "BAIDOO GRACE", "BEKLISI FREDA", "BIRIKORANG ANDYLOVE", "BOATENG DORIS SERWAA", "BUABENG LAWRENCIA", "DADZIE DORCAS", "DJABENG FREDERICA", "DONKOH ESTHER", "EDUFUL DEBORA", "ESSEL BLESSING", "ESSILIFIE DORCAS OGYABA", "GYAMFI FLORENCE", "KUMORDZI ABIGAIL", "KWETEY RHODA DELALI", "MENSAH ELIZABETH", "MENSAH EMMANUELLA", "NKUM GIFTY", "NKYI ESTHER", "OKYERE GLORIA", "OTOO SARAH", "OWUSU EDNA", "OWUSUWAA QUEENSTAR", "PRAH VIVIAN BLESSING", "QUAINOO GRACE AMA", "SENYO CHARLOTTE", "TAYLOR REBECCA EKUA", "YEMO ROSEMOND"][cite: 1],
-      "H/E 1B": ["Abakah NANA A. ELIZABETH", "Addo JANET", "ADUSE IRENE POKUA", "Agyekwaa JESSICA", "Amegatie DAVI YORSE ASPECT", "Amofa BERNICE", "Ananey BARTLEY FREDRICA", "Ankrah RUKIDA", "Anyina ELIZABETH", "Arthur GLADYS", "Arthur IKUA GIFTY", "ASABEA CHARITY", "Ayadzic NKUM JESSICA", "Ayisha SUMAILA", "Bentum ALBERTA", "Boasi OHEMA JACKLINE", "Bondzi GEORGINA", "Cudjoe CLARA", "Dapaah OPOKU CHRISTABEL", "Djan OPOREBEA MAGDALINE", "Donkor GEORGIATE PRINCESS", "Ekuban ELIZABETH", "INKOOM VERONICA", "Kekeli TREVE CHRISTABEL", "Kontoh GRACE", "KOTEI AMON QUEEN", "Mensah AFIA LYDINA", "Mensah AKOSUA ADWOA", "MENSAH LORDINA", "MENSAH LORDINA AKOSUA", "Mensah PRINCESS", "Milson BLESSING MABEL", "Montley MARY", "NYAME QUEENSTAR", "Nyarko NADIA", "OFORI RUTH", "OPPONG MABEL", "Osei RUTH", "OWUSU AGNES", "QUADIOO AGNES", "QUAINOO PRISCILLA", "SACKEY ABENA CLARA", "SEIDU COMFORT ADIZA", "WILLIAMS WENDY", "Yeboah ABIGAIL"][cite: 1],
-      "H/E 2A": ["ABAKAH MERCY", "ABEZUDOR ERICA", "ACKAH PRISCILLA", "ADOMAKO JANET ACHIAA", "ADUSEI OPHELIA", "AFFUL JUDITH", "AGYIRI AUGUSTINA", "AISHATU IBRAHIM", "AKONU CHRISTIANA", "AKUMANI MARGARET", "AKWAFUL CHRISTABEL", "AMISSAH REBECCA", "AMOAH GLADYS OFORIWAA", "AMPIAH VERONICA", "AMPOMAH ERICA", "ANOWAH THERESA", "APEDO-PEDRO CHRISTABEL", "ARHIN ANASTASIA", "ARHINFUL VIDA", "ARTHUR AFIDA ESI", "ARTHUR CHRISTINE", "ASIEKU EMILIA", "ATIVI BLESSING", "ATONTABA HELINA", "BABAE QUEENETH", "BAIDOO MARIAN ESI", "BAIDOO PEPERTUAL", "COLSON EUNICE", "CUDJOE BRIDGET", "DADZIE COMFORT", "DARKOH JESSICA BOADI", "ESSILFIE JULIANA", "ESSOUN FELICIA", "ESSUMAN BERNICE EFUA", "FOSU HANNAH", "FRIMPONG JOSEPHINE", "GYEKERBIA ELIZABETH", "GYEKYE SANDRA", "HAWKSON WENDY ARABA", "IMBEAH COMFORT NAANA", "LAMPTEY DOROTHY", "MANU LILLIAN", "MENSAH GLORIA", "MENSAH ANASTACIA", "MENSAH BETTY", "MENSAH GIFTY", "MENSAH GRACE", "MILLS ELIZABETH TAWIAH", "MONNEY RACHEAL JACHEBEB", "NDZIBAH EDENA", "NIFA ALICE", "ODURO MARY", "OFFEH NYARKO AKOSUA", "OFORI BERLINDA", "OFORI HENRIETTA", "OTENG CELINE", "OWUSU REBECCA", "RAZAK ANDELATU", "SAM MARTHA", "SAMPSON FELICIA", "SAWYERR CHARITABLE", "TAWIAH FRANCISCA", "THOMPSON GRACE"][cite: 1],
-      "H/E 2B": ["ABDULRAHMAN RUKAYA", "ACQUAH ABIGAIL", "ADANA GRACE", "AFRANE ELIZABETH A.", "AKYE HARRIET", "AMEDI VIVIAN AKORFA", "ARTHUR DIANA", "ARTHUR GRACE", "ARTHUR PRISCILLA", "ARTHUR SELINA BASSAW", "ARTHUR VERONICA", "AWOTWE GRACE", "BAIDOO NANCY", "BINNEY THERESA", "BOATENG CYNTHIA", "BUADU CINDY OBENG", "COBBINAH PRINCILLA", "COBBINEAH PRINELLA", "COBOHINAH BLESSING ADWOA", "DADZIE MARY", "DEBORAH RICHEAL", "ESHUN RITA", "ESSILFIE COMFORT", "ESSUMAN QUEEN VICTORIA", "ETHEL AVULETEH", "EWUSI COMFORT", "EYIAH LAWRENCIA", "FRIMPONG ESTHER ANANE", "FRIMPONG OWUSU FOFIE", "GIFTY OGYAE", "JOANITHA ASIRIFI", "KOBBINA HELINA", "KYERENTEMAA ASAMAH BERNICE", "LOIS KUMAH", "MANTEBEA CHRISTABEL", "MARGARET ABLANATSI", "MENSAH JULIANA", "MENSAH PATIENCE", "MENSAH PATRICIA", "MENSAH PAULINA", "NORVINYO BETTY SEFAKOR", "NYARKO EMELIA", "NYARKOH SANDRA OFORI", "OBENEWAA FRANCISCA", "OBOUFI FREDRICA", "OFORI EDWINA", "OFORI HENRIETTA", "OKYERE ANGELINA", "OKYERE ELIZABETH", "OWUSU LILIAN", "PRAH ANITA", "PRAH HANNAH", "PRINCESS NYARIELOH", "QUANI VERONICA", "QUARCOO SANDRA", "RITA KOOMSON", "SAMIRA AKODOGO", "TAWIAH REBECCA", "TAYLOR STEPHANIE", "TORTMATE WILSON OTREWURA", "TUUMASI MONICA", "YEBOAH FRANCISCA", "ZARATU SULE"][cite: 1],
-      "LANG": ["AKALJGA ELIZABETH NANA YAA", "ESHUN COMFORT", "GANTARA NAJAT", "MENSAH SUZANA", "OFORI MARY", "QUARSHIE EDITH DE-VOS", "SUMAILA AYISHATU", "TAWIAH HELINA", "YAWSON DOEZIAR"][cite: 1],
-      "SCI": ["ABDUL MAJID SAFIAN", "ACQUAH GRACE NANA ABA", "ADDY GABRIEL", "AFRANIE CLIFFORD", "AGYPONG DOMINIC", "AIDOO DESMOND", "AMOAKO PATRICIA", "ARMAH SAMUEL", "ARTHUR DEBORAH O", "ASARE BLESS", "BAIDOO EMMANUEL", "DOVLO MATILDA", "ESSEL EMMANUEL", "ESSIAMAH MARGARET", "GYASIE SOLOMON", "KONADU STEPHANIE", "KWARTENG PRINCE", "MENSAH EMELIA", "NUHU ALI", "OPPONG MARGARET LONGDON", "QUANSAH JAMES", "SEDDOH PRINCESS SELASI", "VISU REAHAEL"][cite: 1],
-      "V/A 1": ["ADAM IBRAHEEM", "ADDAE EBENEZER", "ADDO PHILIP", "ADZADZI HAYFORD KWAKU", "AGORDZO CHRISTIANA", "AIDOO THEOPHILUS", "AMPAADU OBED JUNIOUR", "AMPAH EMMANUEL KWAKU", "AMPONG KORANKYE", "ANTWI FOSU MECKIZADICK", "ANTWI PAUL", "ANYAN FELIX", "APPO PROSPER", "AWOTWE ISAAC", "BADU MANUEL", "BAIDEN RAYMOND", "BLANKSON GIDEON", "BOATENG EDWARD", "BOATENG OATHANIEL", "DANSO BERNARD", "DEBRAH GABRIEL", "ESSEL FRANCIS", "FORSON PROSPER", "FRIMPONG KWAME", "FUSEINI SALAMATU", "FYNN ENOCH", "GYAN STANLEY", "GYANKYE RUDOLF", "HACKMAN DERICK", "KAKRA SAMUEL", "MBEAH CHARITY", "MENSAH ABRAHAM", "MENSAH DAVID", "NEEQUAYE DANIEL", "NYARKO ALFRED", "OBENG MAXWELL", "ODUGBE EVANS", "OTOO DESMOND", "OWUSUWAA BLESSING", "QUANSAH NATHANIEL", "QUAYE ISAAC AYAA", "QUAYE JEFFERY", "SAM ISAAC", "SARFO KWABENA", "SEGLA SAMUEL", "TETTEH AUGUSTINE", "TIEKY GIDEON"][cite: 1],
-      "V/A 2": ["ADU MICHAEL", "AGYAH OBED", "AGYAPONG BENEDICTA", "AIDOO KENNETH", "AMEKY RICHARD", "AMETEPEY RICHARD", "AMISSAH ISHMAEL", "AMOAH ALBERT", "AMOAKO DESMOND", "ANDOH MESHACK", "APPIAH BISMARK", "APPIAH DENNIS", "ARTHUR EMMANUEL", "ASAMOAH NECTARIOS", "BAIDOO PATRICK", "BEDOR PATRICK", "BOTWEY ERNEST", "DADZIE RAPHAEL", "DARKO JULIUS", "EDUSAH NANCY", "GYAN ERNEST", "HACKMAN PRINCE", "HOPE GODFRED", "KONOSON CHRISTIAN", "KUSI SHADRACH", "MENSAH ENOCH", "MENSAH ISAAC FORSON", "MENSAH JOEL EMMANUEL", "NAUSEH ISAAC", "NUAMAH CHARLES ATTA", "NYARKO NICHOLAS", "OBENG WILLIAMS PAA KWESI", "ODAME MESHACH", "OPPARE RUTH ENYIFI", "OSEI FREDERICK", "OSEI PRECIOUS", "OWUSU BRIGHT", "PRINCE HACKMAN", "SACKEY ANGELINA", "SAM WENDY", "SETU MALVIN", "TALLEY FRANCIS TOKU", "TAWSON FREDRICK K.K", "TETTEH AUGUSTINE", "YUSIF NASIRU"][cite: 1]
+    // Official 2025/2026 Portal Rosters (662 Students across 15 Classes)
+    var DEFAULT_ROSTERS = {
+      "AGRIC": [
+        "ABBAM GODFRED", "ACQUAH ANTOINETTE", "ACQUAH BENJAMIN", "ACQUAH PATRICK", "AFFEL KINGSLEY", 
+        "AGYEKUM GLADYS", "AGYEMPONG VICTORIA", "AIDOO ANGELA", "AMOAH FRANCIS", "ANSAH BRIGHT", 
+        "ANSAH TEBOAH RICHARD", "ARKO ESTHER", "ARTHUR EBENEZER", "ARTHUR TEBOAH PRISCILLA", "ATUM OHENEWA KAREEM", 
+        "BAAH MARIO GIFT", "BAAH SAMSON", "BADU ANAMAN WILLIAM", "BADUR KYEI ELLIS", "BOATENG OWUSU BELINDA", 
+        "BOTWEY ALBERT NANA YAW", "BOTWEY DANIEL", "DADZIE SAMUEL", "ESHUN GLORIA", "GAMBA BISMARK", 
+        "ISSAH RASHID", "MANU EMMANUEL", "MARFO GIFTY BAAH", "MENSAH BRIGHT OSEI", "MENSAH DEBORAH", 
+        "MENSAH ISAAC", "MENSAH THOMAS", "NICHE GOODLUCK", "NSOWAH VERA", "ODOOM DORIS", 
+        "OFOSU PASCAL JOEL", "OKYERE AUGUSTINE", "OPARE RICHARD", "OPPONG GLORIA", "QUANSAH EBENEZER", 
+        "SACKEY JOSEPH", "SOFORTE MAWUNYO AMANDA", "TEBOAH SANDRA", "YAMOAH ERNEST", "YEBOAH ASANTE KWEKU"
+      ],
+      "ARTS 1": [
+        "ABBAN SILAS", "ADJEI DANIEL", "AFFUL REGINA", "AGGREY GIFTY NHYIRABA", "AGGREY STEPHANIE", 
+        "AGYAPONG PRISCILLA", "AHIANYO BENEDICTA", "AIDOO EMMANUELLA AYEH", "AMEDUME EUNICE", "AMOAH EBENEZER", 
+        "AMOAH PRISCILLA", "AMOASI JESSICA", "AMPADU OBED SENIOR", "ANOWAH THERESAH", "APPIAH JOANA", 
+        "ARHIN NICHOLAS", "ARTHUR EMMANUEL", "ASANTE CHRISTABEL GYAMFUWAA", "ASANTE EDWIN OSEW", "ATAMALE EDNA LAMISI", 
+        "ATITSO CATHERINE KEKELI", "ATWER RICHARD", "AZALOO AUGUSTINA DZIDEDI", "BAAH VINCENT", "BAFFOE KATE ANTWI", 
+        "BEDIAKO EDWARD", "BOADU SAMUEL MENSAH", "BOTCHWEY EMMANUEL", "BOTWEY GERRARD MENSAH", "CLOTTEY ESTHER", 
+        "COFFIE ALEXANDER", "DADZIE PRISCILLA", "DANSO PAULINA AKUA AKYAA", "DONKOH JAMES", "DUMENYAH ISABELLA VERA KLENAM YAWO", 
+        "EGBUABA RITA AMARA", "ENTSIL LETICIA KORANKYEWAA", "ESSAH-QUARM YVONNE YEDIE", "ESSEL EKOW NANA", "FRIMPONG GEORGINA", 
+        "FUSEINI YASMINATU", "IDUN EMILY BAIDOO", "INTISIFUL SOPHIA", "JORBUNO CLIFFORD SEI", "KAKRABA CHRISTOPHER ENCHIL KWEKU", 
+        "KARIMATU MOHAMMED", "KUMAH BLESSING", "KUSSIEDU CHRISTIAN LAWEH", "KUUNIBE ZUVIEL JUDITH", "KWEGYIR EVANS", 
+        "LAMPTEY MAAJULIE", "MARRIAM LARRY", "MAWUSI CHRISTIANA", "MENSAH EVANS", "MENSAH JOANA", 
+        "MENSAH VERA", "NHYIRA JOANA", "NTIM DESMOND OPOKU", "OBOSU ROSALINDA", "OKAITEI ENOCH NATTEY", 
+        "OSEI SYRIA", "OSSEW EDWARD ASANTE", "PRAH VICENTIA BAIDOO", "QUAINOO EMMANUEL", "QUAINOO FELIX", 
+        "ROBERTSON DORA", "SACKEY ANGELINA", "SACKEY GRACE TWUMWAA", "SADIA DAUDA", "TAKYI WINIFRED", 
+        "YEBOAH ELIZABETH", "YEVU ESTHER", "ZURFAWU MOHAMMED"
+      ],
+      "ARTS 2A": [
+        "ACKAAH BEATRICE", "ACKWERH GIDEON", "ACQUAH BARIKISU BADUA", "ACQUAH EVELYN", "ADIKAH ERIC", 
+        "ADJEI ISAAC", "AFFRIM HENRY NYAMEKYE JNR.", "AGYIR EMELIA", "AIDOO JOHN", "AMUZU PHANNUEL", 
+        "ANIM ALFREDA OHEMAA", "ANTWIWAA ELIZABETH BARBARA", "ANTWIWAAH AGYEMANG E. BOTAH", "APPIAH EMMANUEL", "ARTHUR CINDY", 
+        "ARTHUR STEPHEN", "ASAMOAH KINGSFORD", "ASANTE-ACQUAH JOEL", "ASARE JOSHUA", "ASEIDU PRINCE MENSAH", 
+        "ASIAMAH GRACE", "AYIAH ENOCH", "BAFFOUR SAMUEL", "BAIDOO EMMANUEL", "BARYEE ERICA ALICE SLEWRO", 
+        "BOAFO ABRAHAM", "BOTCHWAY CHRISTABEL", "DADZIE SYLVESTER", "DANKWAH VICENTIA", "EFFAH-OWUSU SHIRLEY AMOAKOWAA", 
+        "GBEBLEWU PRISCILLA", "GYAMFI BISMARK", "JAJAH HAFSATU MUTAWUHLU", "KAFARI DAISY", "KLUTSE DOROTHY", 
+        "KOOMSON LYDIA", "KYEI ABIGAIL NHYIRA BOATEMAA", "KYEREWA YAWSON BLESSING", "LAMPTEY JESSICA", "MENSAH CHARITY", 
+        "MENSAH WINNIFRED EDUAH", "NDEGO FAUSTINA", "NIFA ESTHER AMOANOO", "NKPANBI MARY", "NUNOO JACOB AKUETEH", 
+        "OFORI EDWINA", "PAINTSIL EDNA", "SAM JENNIFER MILLS", "SHAIBU SADIK ABUBAKAR", "TABOH RICHARD", 
+        "WILLIAMS VERA YAYRA", "YUSSIF DANJUMAH"
+      ],
+      "ARTS 2B": [
+        "ABANO FLORENCE", "ABEKA ENNIN LETICIA", "ADIAKO FELIX", "ADU APOH CHARLOTTE", "AFFIAMOAH IVY TSIBU", 
+        "AFFOH JESSICA", "AIDOO EMMANUEL", "AKYAA OWUSU EDMUNDS", "ALELOEY ELINICE", "AMADAKO HARRIET", 
+        "AMARE PRINCE", "AMENUVOR ISAAC", "AMOAH THOMAS", "AMOAMA CHRIS", "ANNAH DAVID", 
+        "ANNOR MAYBEL", "APPAU JUSTICE", "ARMAH NOARA N.A", "ARMAH NORA N.A", "ARMAH NORA NAA AYELLEY", 
+        "ARTHUR GIFTY", "ASAKE STEPHEN", "ASAMPANA PRISCILLA AWOKA", "ATAKPA MARTHA", "ATILA WISDOM", 
+        "ATTA INISMAN", "AWUAH SAMIRATU", "AYENSU RUTH", "BAIDOO BISMARK", "BAIDOO HENRY", 
+        "BEGYINA RICHARD", "BINEY CORNELIUS", "COFFIE REGINA NAA CHARNOR", "DAKOH VICTORIA ENYONAM", "DONKOR NANA YAA NANCY", 
+        "EBOAH MARY", "ESHUN JOSEPH HARRISON", "ESSUMAN SAMPSON", "GBOGBO MAWUTOR JESSICA", "KWAKYE GIFTY", 
+        "LAMPTEY ANNABEL K.T", "LAMPTEY BLESSING", "MENSAH CELESTINA", "MENSAH HENRY OSEI", "MENSAH MARY", 
+        "NKUM SHERIFFE", "OBOH CHRISTABEL", "OHENE BRIDGET", "OHENE RICHMOND", "OPOKU VERA YAA", 
+        "OTABIL BISMARK", "OWENE BRIGHT", "QUAINOO MARY", "TIMO EUGENE", "YEBOAH YVONNE"
+      ],
+      "ARTS 3": [
+        "ADJEWUNAH JOYCE", "AKOMANYI STEPHENIE", "AMOAH HANNAH", "AMOAKO MATILDA", "ANDOH STEPHEN", 
+        "ANKOMAH NANA AFARI", "ANSAH VICENTIA", "APPIAH MICHELLE NHYIRA", "APPIAH MIMI NHYIRA", "APPU MARY", 
+        "ARTHUR PATIENCE", "ASAMOAH FRANCISCA NKRUMAH", "ASAMOAH JOYCE", "ATENSU HILDA", "AYENSU HILDA", 
+        "AYITEY BENEDICTA", "AYITEY ELIZABETH", "BOADI MATILDA", "BOAFOAH MARY", "BOTWEY PRINCE", 
+        "DADZIE JOSHUA", "DANSO BRIGHT", "DANSO PATIENCE", "DONKOR BENEDICTA", "DONKOR MATILDA", 
+        "DUODU PRISCILLA", "EDUMADZE EUNICE", "EFFUM REBECCA", "ENTSIE EMMANUEL", "FOSU KELVIN", 
+        "FRIMPONG FRANCIS", "GYAN EUNICE", "KORANKYE FRANCIS", "KRAMPAH PRISCILLA", "KUMI PATIENCE", 
+        "KUSI AGNES", "KUSI DANIEL", "KYEI VERONICA", "MINTAH ADELAIDE", "MINTAH CHARITY", 
+        "MINTAH JANET", "MINTAH MERCY", "MINTAH PORTIA", "MINTAH ROSEMOND", "MOHAMMED SUWEIBATU", 
+        "NDUR JOSHUA", "NINSON REBECCA", "NKRUMAH ERNESTINA", "NKANSAH EMMANUEL", "NYAMEKYE ERNEST", 
+        "OFORI AGNES", "OFORI GIFTY", "OPOKU EBENEZER", "OSEI ISAAC", "QUAYE ENOCH", 
+        "QUAYE JOYCE", "SARPONG AGNES", "TAKYI BRIGHT", "WONKYI ELIZABETH"
+      ],
+      "ARTS 4": [
+        "ABOAGYEWAA ABIGAIL ETEIR", "AMOASI CECILIA", "ANAFO PATRICK", "ANDOH CHRISTABEL", "APPIAH THERESAH", 
+        "ASAMOAH KINGSLEY", "ASANTE CECILIA", "BADU AUGUSTINE BOAKO", "BAIDOO EMMACULATE NYARKOAH", "BOATENG IRENE", 
+        "BODUAH DENNIS", "BOTCHWEY JAMILA", "DANSO ANITA", "EDUFUWAAH ELIZABETH", "EWUSI ALICE", 
+        "EYI MONICA", "EYIA OKYEREWAAH ESTHER", "FRIMPONG MERCY", "LARDE ELIZABETH", "MFUM PORTIA", 
+        "OBOH JOYCE", "OFFEI CHARLLOTE", "OFORI PORTIA"
+      ],
+      "BUS": [
+        "ABDUL YUSIF M", "AKAKPO ERNESTINE B.", "ANKOH SAMUEL", "ARAFAT MOHAMMED N", "FIADU DAVIS", 
+        "KUSSIEDU CHRISTIANA ATTA", "MENSAH SOLOMON", "NKRUMAH RACHEAL", "OPPONG STEPHEN J.", "YEBOA DAVID"
+      ],
+      "H/E 1A": [
+        "ABOSI PRISCILLA", "ACQUAH SANDRA NYANTAKYIWAA", "ADOKOH PRISCILLA KEELSON", "AFFUL JESSICA ESSON", "AGBEZUKEY SUZANA", 
+        "AIDOO CIARAS KWATEMAA", "AIDOO REBECCA", "AKPASAH JOYCELYN", "AMAWUDA ERNESTINA", "AMISSAH PRISCILLA", 
+        "ANKRAH STELLA", "ANNING CECILIA", "APPIAH GIFTY", "APPIAH LUCKYCIA", "APPIAH ZITA", 
+        "APPIAH-KUBI PRISCILLA", "ARTHUR ABIGAIL", "ARTHUR REBECCA", "ASIMENU THEODORA", "ASSAN PRECIOUS DANSOWAA", 
+        "AYIKU MARY", "BAIDOO GRACE", "BEKLISI FREDA", "BIRIKORANG ANDYLOVE", "BOATENG DORIS SERWAA", 
+        "BUABENG LAWRENCIA", "DADZIE DORCAS", "DJABENG FREDERICA", "DONKOH ESTHER", "EDUFUL DEBORA", 
+        "ESSEL BLESSING", "ESSILIFIE DORCAS OGYABA", "GYAMFI FLORENCE", "KUMORDZI ABIGAIL", "KWETEY RHODA DELALI", 
+        "MENSAH ELIZABETH", "MENSAH EMMANUELLA", "NKUM GIFTY", "NKYI ESTHER", "OKYERE GLORIA", 
+        "OTOO SARAH", "OWUSU EDNA", "OWUSUWAA QUEENSTAR", "PRAH VIVIAN BLESSING", "QUAINOO GRACE AMA", 
+        "SENYO CHARLOTTE", "TAYLOR REBECCA EKUA", "YEMO ROSEMOND"
+      ],
+      "H/E 1B": [
+        "Abakah NANA A. ELIZABETH", "Addo JANET", "ADUSE IRENE POKUA", "Agyekwaa JESSICA", "Amegatie DAVI YORSE ASPECT", 
+        "Amofa BERNICE", "Ananey BARTLEY FREDRICA", "Ankrah RUKIDA", "Anyina ELIZABETH", "Arthur GLADYS", 
+        "Arthur IKUA GIFTY", "ASABEA CHARITY", "Ayadzic NKUM JESSICA", "Ayisha SUMAILA", "Bentum ALBERTA", 
+        "Boasi OHEMA JACKLINE", "Bondzi GEORGINA", "Cudjoe CLARA", "Dapaah OPOKU CHRISTABEL", "Djan OPOREBEA MAGDALINE", 
+        "Donkor GEORGIATE PRINCESS", "Ekuban ELIZABETH", "INKOOM VERONICA", "Kekeli TREVE CHRISTABEL", "Kontoh GRACE", 
+        "KOTEI AMON QUEEN", "Mensah AFIA LYDINA", "Mensah AKOSUA ADWOA", "MENSAH LORDINA", "MENSAH LORDINA AKOSUA", 
+        "Mensah PRINCESS", "Milson BLESSING MABEL", "Montley MARY", "NYAME QUEENSTAR", "Nyarko NADIA", 
+        "OFORI RUTH", "OPPONG MABEL", "Osei RUTH", "OWUSU AGNES", "QUADIOO AGNES", 
+        "QUAINOO PRISCILLA", "SACKEY ABENA CLARA", "SEIDU COMFORT ADIZA", "WILLIAMS WENDY", "Yeboah ABIGAIL"
+      ],
+      "H/E 2A": [
+        "ABAKAH MERCY", "ABEZUDOR ERICA", "ACKAH PRISCILLA", "ADOMAKO JANET ACHIAA", "ADUSEI OPHELIA", 
+        "AFFUL JUDITH", "AGYIRI AUGUSTINA", "AISHATU IBRAHIM", "AKONU CHRISTIANA", "AKUMANI MARGARET", 
+        "AKWAFUL CHRISTABEL", "AMISSAH REBECCA", "AMOAH GLADYS OFORIWAA", "AMPIAH VERONICA", "AMPOMAH ERICA", 
+        "ANOWAH THERESA", "APEDO-PEDRO CHRISTABEL", "ARHIN ANASTASIA", "ARHINFUL VIDA", "ARTHUR AFIDA ESI", 
+        "ARTHUR CHRISTINE", "ASIEKU EMILIA", "ATIVI BLESSING", "ATONTABA HELINA", "BABAE QUEENETH", 
+        "BAIDOO MARIAN ESI", "BAIDOO PEPERTUAL", "COLSON EUNICE", "CUDJOE BRIDGET", "DADZIE COMFORT", 
+        "DARKOH JESSICA BOADI", "ESSILFIE JULIANA", "ESSOUN FELICIA", "ESSUMAN BERNICE EFUA", "FOSU HANNAH", 
+        "FRIMPONG JOSEPHINE", "GYEKERBIA ELIZABETH", "GYEKYE SANDRA", "HAWKSON WENDY ARABA", "IMBEAH COMFORT NAANA", 
+        "LAMPTEY DOROTHY", "MANU LILLIAN", "MENSAH GLORIA", "MENSAH ANASTACIA", "MENSAH BETTY", 
+        "MENSAH GIFTY", "MENSAH GRACE", "MILLS ELIZABETH TAWIAH", "MONNEY RACHEAL JACHEBEB", "NDZIBAH EDENA", 
+        "NIFA ALICE", "ODURO MARY", "OFFEH NYARKO AKOSUA", "OFORI BERLINDA", "OFORI HENRIETTA", 
+        "OTENG CELINE", "OWUSU REBECCA", "RAZAK ANDELATU", "SAM MARTHA", "SAMPSON FELICIA", 
+        "SAWYERR CHARITABLE", "TAWIAH FRANCISCA", "THOMPSON GRACE"
+      ],
+      "H/E 2B": [
+        "ABDULRAHMAN RUKAYA", "ACQUAH ABIGAIL", "ADANA GRACE", "AFRANE ELIZABETH A.", "AKYE HARRIET", 
+        "AMEDI VIVIAN AKORFA", "ARTHUR DIANA", "ARTHUR GRACE", "ARTHUR PRISCILLA", "ARTHUR SELINA BASSAW", 
+        "ARTHUR VERONICA", "AWOTWE GRACE", "BAIDOO NANCY", "BINNEY THERESA", "BOATENG CYNTHIA", 
+        "BUADU CINDY OBENG", "COBBINAH PRINCILLA", "COBBINEAH PRINELLA", "COBOHINAH BLESSING ADWOA", "DADZIE MARY", 
+        "DEBORAH RICHEAL", "ESHUN RITA", "ESSILFIE COMFORT", "ESSUMAN QUEEN VICTORIA", "ETHEL AVULETEH", 
+        "EWUSI COMFORT", "EYIAH LAWRENCIA", "FRIMPONG ESTHER ANANE", "FRIMPONG OWUSU FOFIE", "GIFTY OGYAE", 
+        "JOANITHA ASIRIFI", "KOBBINA HELINA", "KYERENTEMAA ASAMAH BERNICE", "LOIS KUMAH", "MANTEBEA CHRISTABEL", 
+        "MARGARET ABLANATSI", "MENSAH JULIANA", "MENSAH PATIENCE", "MENSAH PATRICIA", "MENSAH PAULINA", 
+        "NORVINYO BETTY SEFAKOR", "NYARKO EMELIA", "NYARKOH SANDRA OFORI", "OBENEWAA FRANCISCA", "OBOUFI FREDRICA", 
+        "OFORI EDWINA", "OFORI HENRIETTA", "OKYERE ANGELINA", "OKYERE ELIZABETH", "OWUSU LILIAN", 
+        "PRAH ANITA", "PRAH HANNAH", "PRINCESS NYARIELOH", "QUANI VERONICA", "QUARCOO SANDRA", 
+        "RITA KOOMSON", "SAMIRA AKODOGO", "TAWIAH REBECCA", "TAYLOR STEPHANIE", "TORTMATE WILSON OTREWURA", 
+        "TUUMASI MONICA", "YEBOAH FRANCISCA", "ZARATU SULE"
+      ],
+      "LANG": [
+        "AKALJGA ELIZABETH NANA YAA", "ESHUN COMFORT", "GANTARA NAJAT", "MENSAH SUZANA", "OFORI MARY", 
+        "QUARSHIE EDITH DE-VOS", "SUMAILA AYISHATU", "TAWIAH HELINA", "YAWSON DOEZIAR"
+      ],
+      "SCI": [
+        "ABDUL MAJID SAFIAN", "ACQUAH GRACE NANA ABA", "ADDY GABRIEL", "AFRANIE CLIFFORD", "AGYPONG DOMINIC", 
+        "AIDOO DESMOND", "AMOAKO PATRICIA", "ARMAH SAMUEL", "ARTHUR DEBORAH O", "ASARE BLESS", 
+        "BAIDOO EMMANUEL", "DOVLO MATILDA", "ESSEL EMMANUEL", "ESSIAMAH MARGARET", "GYASIE SOLOMON", 
+        "KONADU STEPHANIE", "KWARTENG PRINCE", "MENSAH EMELIA", "NUHU ALI", "OPPONG MARGARET LONGDON", 
+        "QUANSAH JAMES", "SEDDOH PRINCESS SELASI", "VISU REAHAEL"
+      ],
+      "V/A 1": [
+        "ADAM IBRAHEEM", "ADDAE EBENEZER", "ADDO PHILIP", "ADZADZI HAYFORD KWAKU", "AGORDZO CHRISTIANA", 
+        "AIDOO THEOPHILUS", "AMPAADU OBED JUNIOUR", "AMPAH EMMANUEL KWAKU", "AMPONG KORANKYE", "ANTWI FOSU MECKIZADICK", 
+        "ANTWI PAUL", "ANYAN FELIX", "APPO PROSPER", "AWOTWE ISAAC", "BADU MANUEL", 
+        "BAIDEN RAYMOND", "BLANKSON GIDEON", "BOATENG EDWARD", "BOATENG OATHANIEL", "DANSO BERNARD", 
+        "DEBRAH GABRIEL", "ESSEL FRANCIS", "FORSON PROSPER", "FRIMPONG KWAME", "FUSEINI SALAMATU", 
+        "FYNN ENOCH", "GYAN STANLEY", "GYANKYE RUDOLF", "HACKMAN DERICK", "KAKRA SAMUEL", 
+        "MBEAH CHARITY", "MENSAH ABRAHAM", "MENSAH DAVID", "NEEQUAYE DANIEL", "NYARKO ALFRED", 
+        "OBENG MAXWELL", "ODUGBE EVANS", "OTOO DESMOND", "OWUSUWAA BLESSING", "QUANSAH NATHANIEL", 
+        "QUAYE ISAAC AYAA", "QUAYE JEFFERY", "SAM ISAAC", "SARFO KWABENA", "SEGLA SAMUEL", 
+        "TETTEH AUGUSTINE", "TIEKY GIDEON"
+      ],
+      "V/A 2": [
+        "ADU MICHAEL", "AGYAH OBED", "AGYAPONG BENEDICTA", "AIDOO KENNETH", "AMEKY RICHARD", 
+        "AMETEPEY RICHARD", "AMISSAH ISHMAEL", "AMOAH ALBERT", "AMOAKO DESMOND", "ANDOH MESHACK", 
+        "APPIAH BISMARK", "APPIAH DENNIS", "ARTHUR EMMANUEL", "ASAMOAH NECTARIOS", "BAIDOO PATRICK", 
+        "BEDOR PATRICK", "BOTWEY ERNEST", "DADZIE RAPHAEL", "DARKO JULIUS", "EDUSAH NANCY", 
+        "GYAN ERNEST", "HACKMAN PRINCE", "HOPE GODFRED", "KONOSON CHRISTIAN", "KUSI SHADRACH", 
+        "MENSAH ENOCH", "MENSAH ISAAC FORSON", "MENSAH JOEL EMMANUEL", "NAUSEH ISAAC", "NUAMAH CHARLES ATTA", 
+        "NYARKO NICHOLAS", "OBENG WILLIAMS PAA KWESI", "ODAME MESHACH", "OPPARE RUTH ENYIFI", "OSEI FREDERICK", 
+        "OSEI PRECIOUS", "OWUSU BRIGHT", "PRINCE HACKMAN", "SACKEY ANGELINA", "SAM WENDY", 
+        "SETU MALVIN", "TALLEY FRANCIS TOKU", "TAWSON FREDRICK K.K", "TETTEH AUGUSTINE", "YUSIF NASIRU"
+      ]
     };
 
-    let currentRosters = {};
-    let recordedScores = [];
-    let customSubjects = ["Computing", "ICT"];
+    var currentRosters = {};
+    var recordedScores = [];
+    var customSubjects = ["Computing", "ICT"];
 
-    // Initialize data safely
-    function initializeData() {
-      // Check if rosters exist and are non-empty
-      const stored = localStorage.getItem("ANASS_ROSTERS_2026");
-      let needsReset = false;
-
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
+    // Initialize application state
+    function initializePortal() {
+      try {
+        var savedRosters = localStorage.getItem("ANASS_ROSTERS_2026");
+        if (savedRosters) {
+          var parsed = JSON.parse(savedRosters);
           if (parsed && typeof parsed === 'object' && Object.keys(parsed).length >= 15) {
             currentRosters = parsed;
           } else {
-            needsReset = true;
+            currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+            localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
           }
-        } catch(e) {
-          needsReset = true;
+        } else {
+          currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
+          localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
         }
-      } else {
-        needsReset = true;
-      }
-
-      if (needsReset) {
+      } catch (err) {
         currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
-        localStorage.setItem("ANASS_ROSTERS_2026", JSON.stringify(currentRosters));
       }
 
-      const storedScores = localStorage.getItem("ANASS_SCORES_RECORDED");
-      if (storedScores) {
-        try { recordedScores = JSON.parse(storedScores); } catch(e) { recordedScores = []; }
-      }
+      try {
+        var savedScores = localStorage.getItem("ANASS_SCORES_RECORDED");
+        if (savedScores) recordedScores = JSON.parse(savedScores);
+      } catch (e) { recordedScores = []; }
 
-      const storedSubs = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
-      if (storedSubs) {
-        try { customSubjects = JSON.parse(storedSubs); } catch(e) { customSubjects = ["Computing", "ICT"]; }
-      }
+      try {
+        var savedSubs = localStorage.getItem("ANASS_CUSTOM_SUBJECTS");
+        if (savedSubs) customSubjects = JSON.parse(savedSubs);
+      } catch (e) { customSubjects = ["Computing", "ICT"]; }
+
+      // Populate interface elements
+      populateClassSelectors();
+      updateSubjectDropdown();
+      onClassChange();
+      applyFiltersAndRenderTable();
+      updateAnalyticsMetrics();
+      updateTotalRosterBadge();
     }
 
     function populateClassSelectors() {
-      const classSelect = document.getElementById("classSelect");
-      const filterClassSelect = document.getElementById("filterClassSelect");
-      const modalClassSelector = document.getElementById("modalClassSelector");
+      var classSelect = document.getElementById("classSelect");
+      var filterClassSelect = document.getElementById("filterClassSelect");
+      var modalClassSelector = document.getElementById("modalClassSelector");
 
-      const classes = Object.keys(currentRosters);
-      if (classes.length === 0) return;
+      var classNames = Object.keys(currentRosters);
+      if (classNames.length === 0) return;
 
       classSelect.innerHTML = "";
       filterClassSelect.innerHTML = '<option value="ALL">All Classes</option>';
       modalClassSelector.innerHTML = "";
 
-      classes.forEach(c => {
-        classSelect.add(new Option(c, c));
-        filterClassSelect.add(new Option(c, c));
-        modalClassSelector.add(new Option(c, c));
-      });
+      for (var i = 0; i < classNames.length; i++) {
+        var cls = classNames[i];
+        classSelect.add(new Option(cls, cls));
+        filterClassSelect.add(new Option(cls, cls));
+        modalClassSelector.add(new Option(cls, cls));
+      }
     }
 
     function updateSubjectDropdown() {
-      const subjectSelect = document.getElementById("subjectSelect");
-      const filterSubjectSelect = document.getElementById("filterSubjectSelect");
+      var subjectSelect = document.getElementById("subjectSelect");
+      var filterSubjectSelect = document.getElementById("filterSubjectSelect");
 
       subjectSelect.innerHTML = "";
       filterSubjectSelect.innerHTML = '<option value="ALL">All Subjects</option>';
 
-      customSubjects.forEach(s => {
-        subjectSelect.add(new Option(s, s));
-        filterSubjectSelect.add(new Option(s, s));
-      });
+      for (var i = 0; i < customSubjects.length; i++) {
+        var sub = customSubjects[i];
+        subjectSelect.add(new Option(sub, sub));
+        filterSubjectSelect.add(new Option(sub, sub));
+      }
     }
 
     function onClassChange() {
-      const classSelect = document.getElementById("classSelect");
-      const selectedClass = classSelect ? classSelect.value : "AGRIC";
-      const studentSelect = document.getElementById("studentSelect");
-      const countBadge = document.getElementById("activeClassRosterCount");
-      const quickViewName = document.getElementById("quickViewClassName");
-      const quickList = document.getElementById("quickClassRosterList");
+      var classSelect = document.getElementById("classSelect");
+      var selectedClass = classSelect ? classSelect.value : "AGRIC";
+      var studentSelect = document.getElementById("studentSelect");
+      var countBadge = document.getElementById("activeClassRosterCount");
+      var quickViewName = document.getElementById("quickViewClassName");
+      var quickList = document.getElementById("quickClassRosterList");
 
       if (!studentSelect) return;
       studentSelect.innerHTML = "";
 
-      const students = currentRosters[selectedClass] || [];
-      if (countBadge) countBadge.textContent = `${students.length} Students`;
+      var students = currentRosters[selectedClass] || [];
+      if (countBadge) countBadge.textContent = students.length + " Students";
       if (quickViewName) quickViewName.textContent = selectedClass;
 
       if (students.length === 0) {
-        const placeholder = new Option("-- No students in this class --", "");
+        var placeholder = new Option("-- No students enrolled --", "");
         placeholder.disabled = true;
         studentSelect.add(placeholder);
-        if (quickList) quickList.innerHTML = '<span class="text-slate-400 italic">No students currently enrolled.</span>';
+        if (quickList) quickList.innerHTML = '<span class="text-slate-400 italic">No students enrolled.</span>';
       } else {
-        students.forEach(student => {
-          studentSelect.add(new Option(student, student));
-        });
+        for (var i = 0; i < students.length; i++) {
+          studentSelect.add(new Option(students[i], students[i]));
+        }
 
         if (quickList) {
-          quickList.innerHTML = students.map(st => 
-            `<span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">${st}</span>`
-          ).join("");
+          quickList.innerHTML = students.map(function(st) {
+            return '<span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">' + st + '</span>';
+          }).join("");
         }
       }
     }
 
     function promptAddSubject() {
-      const newSub = prompt("Enter new Subject name:");
+      var newSub = prompt("Enter new Subject name:");
       if (newSub && newSub.trim()) {
-        const trimmed = newSub.trim();
-        if (!customSubjects.includes(trimmed)) {
+        var trimmed = newSub.trim();
+        if (customSubjects.indexOf(trimmed) === -1) {
           customSubjects.push(trimmed);
           localStorage.setItem("ANASS_CUSTOM_SUBJECTS", JSON.stringify(customSubjects));
           updateSubjectDropdown();
           document.getElementById("subjectSelect").value = trimmed;
-          showToast(`Subject "${trimmed}" added!`);
+          showToast('Subject "' + trimmed + '" added!');
         } else {
           alert("This subject already exists.");
         }
@@ -622,7 +777,7 @@
     }
 
     function calculateGrade(score) {
-      const s = parseFloat(score);
+      var s = parseFloat(score);
       if (isNaN(s)) return { grade: "--", remark: "--", badgeColor: "bg-slate-100 text-slate-700 border-slate-300" };
       if (s >= 80) return { grade: "A1", remark: "Excellent", badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300" };
       if (s >= 75) return { grade: "B2", remark: "Very Good", badgeColor: "bg-teal-100 text-teal-800 border-teal-300" };
@@ -636,9 +791,9 @@
     }
 
     function handleScoreInputPreview(val) {
-      const badge = document.getElementById("gradePreviewBadge");
-      const err = document.getElementById("scoreValidationMsg");
-      const score = parseFloat(val);
+      var badge = document.getElementById("gradePreviewBadge");
+      var err = document.getElementById("scoreValidationMsg");
+      var score = parseFloat(val);
 
       if (val === "" || isNaN(score)) {
         badge.textContent = "Grade: --";
@@ -656,21 +811,21 @@
       }
 
       err.classList.add("hidden");
-      const res = calculateGrade(score);
-      badge.textContent = `Grade: ${res.grade} (${res.remark})`;
-      badge.className = `text-xs font-bold px-2 py-0.5 rounded-full border ${res.badgeColor}`;
+      var res = calculateGrade(score);
+      badge.textContent = "Grade: " + res.grade + " (" + res.remark + ")";
+      badge.className = "text-xs font-bold px-2 py-0.5 rounded-full border " + res.badgeColor;
     }
 
     function handleScoreSubmit(e) {
       e.preventDefault();
-      const subject = document.getElementById("subjectSelect").value;
-      const className = document.getElementById("classSelect").value;
-      const student = document.getElementById("studentSelect").value;
-      const scoreVal = parseFloat(document.getElementById("scoreInput").value);
-      const remarkInput = document.getElementById("remarkInput").value.trim();
+      var subject = document.getElementById("subjectSelect").value;
+      var className = document.getElementById("classSelect").value;
+      var student = document.getElementById("studentSelect").value;
+      var scoreVal = parseFloat(document.getElementById("scoreInput").value);
+      var remarkInput = document.getElementById("remarkInput").value.trim();
 
       if (!student) {
-        alert("Please select or add a student first.");
+        alert("Please select a valid student from the roster.");
         return;
       }
 
@@ -679,30 +834,34 @@
         return;
       }
 
-      const gradeInfo = calculateGrade(scoreVal);
-      const remark = remarkInput || gradeInfo.remark;
+      var gradeInfo = calculateGrade(scoreVal);
+      var remark = remarkInput || gradeInfo.remark;
 
-      const existingIndex = recordedScores.findIndex(
-        entry => entry.student === student && entry.className === className && entry.subject === subject
-      );
+      var existingIndex = -1;
+      for (var i = 0; i < recordedScores.length; i++) {
+        if (recordedScores[i].student === student && recordedScores[i].className === className && recordedScores[i].subject === subject) {
+          existingIndex = i;
+          break;
+        }
+      }
 
-      const recordItem = {
+      var recordItem = {
         id: existingIndex > -1 ? recordedScores[existingIndex].id : "REC-" + Date.now(),
-        student,
-        className,
-        subject,
+        student: student,
+        className: className,
+        subject: subject,
         score: scoreVal,
         grade: gradeInfo.grade,
-        remark,
+        remark: remark,
         timestamp: new Date().toLocaleString()
       };
 
       if (existingIndex > -1) {
         recordedScores[existingIndex] = recordItem;
-        showToast(`Updated ${student}: ${scoreVal}`);
+        showToast("Updated " + student + ": " + scoreVal);
       } else {
         recordedScores.unshift(recordItem);
-        showToast(`Saved ${student}: ${scoreVal} (${gradeInfo.grade})`);
+        showToast("Saved " + student + ": " + scoreVal + " (" + gradeInfo.grade + ")");
       }
 
       localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
@@ -722,22 +881,22 @@
     }
 
     function applyFiltersAndRenderTable() {
-      const filterClass = document.getElementById("filterClassSelect").value;
-      const filterSubject = document.getElementById("filterSubjectSelect").value;
-      const searchTerm = document.getElementById("searchStudentInput").value.toLowerCase().trim();
+      var filterClass = document.getElementById("filterClassSelect").value;
+      var filterSubject = document.getElementById("filterSubjectSelect").value;
+      var searchTerm = document.getElementById("searchStudentInput").value.toLowerCase().trim();
 
-      const tbody = document.getElementById("scoreLedgerBody");
-      const emptyNotice = document.getElementById("noRecordsNotice");
-      const countBadge = document.getElementById("filteredRecordCount");
+      var tbody = document.getElementById("scoreLedgerBody");
+      var emptyNotice = document.getElementById("noRecordsNotice");
+      var countBadge = document.getElementById("filteredRecordCount");
 
-      const filtered = recordedScores.filter(rec => {
-        const matchClass = filterClass === "ALL" || rec.className === filterClass;
-        const matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
-        const matchSearch = searchTerm === "" || rec.student.toLowerCase().includes(searchTerm);
+      var filtered = recordedScores.filter(function(rec) {
+        var matchClass = filterClass === "ALL" || rec.className === filterClass;
+        var matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
+        var matchSearch = searchTerm === "" || rec.student.toLowerCase().indexOf(searchTerm) !== -1;
         return matchClass && matchSubject && matchSearch;
       });
 
-      countBadge.textContent = `${filtered.length} entries`;
+      countBadge.textContent = filtered.length + " entries";
 
       if (filtered.length === 0) {
         tbody.innerHTML = "";
@@ -746,34 +905,26 @@
       }
 
       emptyNotice.classList.add("hidden");
-      tbody.innerHTML = filtered.map((rec, index) => {
-        const gradeBadge = calculateGrade(rec.score).badgeColor;
-        return `
-          <tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="py-2.5 px-3.5 text-xs text-slate-400 font-mono">${index + 1}</td>
-            <td class="py-2.5 px-3.5 font-bold text-slate-800 text-xs sm:text-sm">${rec.student}</td>
-            <td class="py-2.5 px-3.5"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200">${rec.className}</span></td>
-            <td class="py-2.5 px-3.5 text-xs font-semibold text-slate-700">${rec.subject}</td>
-            <td class="py-2.5 px-3.5 text-right font-black font-mono text-sm text-slate-800">${rec.score.toFixed(1)}</td>
-            <td class="py-2.5 px-3.5 text-center">
-              <span class="px-2 py-0.5 rounded-full text-xs font-bold border ${gradeBadge}">
-                ${rec.grade}
-              </span>
-            </td>
-            <td class="py-2.5 px-3.5 text-xs text-slate-600">${rec.remark}</td>
-            <td class="py-2.5 px-3.5 text-center">
-              <button onclick="deleteScoreEntry('${rec.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 transition" title="Delete record">
-                <i class="fa-solid fa-trash-can text-xs"></i>
-              </button>
-            </td>
-          </tr>
-        `;
+      tbody.innerHTML = filtered.map(function(rec, index) {
+        var gradeBadge = calculateGrade(rec.score).badgeColor;
+        return (
+          '<tr class="hover:bg-slate-50/80 transition-colors">' +
+            '<td class="py-2.5 px-3.5 text-xs text-slate-400 font-mono">' + (index + 1) + '</td>' +
+            '<td class="py-2.5 px-3.5 font-bold text-slate-800 text-xs sm:text-sm">' + rec.student + '</td>' +
+            '<td class="py-2.5 px-3.5"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200">' + rec.className + '</span></td>' +
+            '<td class="py-2.5 px-3.5 text-xs font-semibold text-slate-700">' + rec.subject + '</td>' +
+            '<td class="py-2.5 px-3.5 text-right font-black font-mono text-sm text-slate-800">' + rec.score.toFixed(1) + '</td>' +
+            '<td class="py-2.5 px-3.5 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold border ' + gradeBadge + '">' + rec.grade + '</span></td>' +
+            '<td class="py-2.5 px-3.5 text-xs text-slate-600">' + rec.remark + '</td>' +
+            '<td class="py-2.5 px-3.5 text-center"><button onclick="deleteScoreEntry(\'' + rec.id + '\')" class="p-1.5 text-slate-400 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can text-xs"></i></button></td>' +
+          '</tr>'
+        );
       }).join("");
     }
 
     function deleteScoreEntry(id) {
       if (confirm("Remove this score record?")) {
-        recordedScores = recordedScores.filter(r => r.id !== id);
+        recordedScores = recordedScores.filter(function(r) { return r.id !== id; });
         localStorage.setItem("ANASS_SCORES_RECORDED", JSON.stringify(recordedScores));
         applyFiltersAndRenderTable();
         updateAnalyticsMetrics();
@@ -796,7 +947,7 @@
     }
 
     function updateAnalyticsMetrics() {
-      const totalCount = recordedScores.length;
+      var totalCount = recordedScores.length;
       document.getElementById("metricTotalEntries").textContent = totalCount;
 
       if (totalCount === 0) {
@@ -807,24 +958,26 @@
         return;
       }
 
-      const sum = recordedScores.reduce((acc, cur) => acc + cur.score, 0);
-      document.getElementById("metricClassAverage").textContent = (sum / totalCount).toFixed(1);
+      var sum = 0;
+      var passes = 0;
+      var highest = recordedScores[0];
 
-      let highest = recordedScores[0];
-      let passes = 0;
-      recordedScores.forEach(rec => {
+      for (var i = 0; i < recordedScores.length; i++) {
+        var rec = recordedScores[i];
+        sum += rec.score;
         if (rec.score > highest.score) highest = rec;
         if (rec.score >= 50) passes++;
-      });
+      }
 
+      document.getElementById("metricClassAverage").textContent = (sum / totalCount).toFixed(1);
       document.getElementById("metricHighestScore").textContent = highest.score.toFixed(1);
       document.getElementById("metricHighestStudent").textContent = highest.student;
-      document.getElementById("metricPassRate").textContent = `${((passes / totalCount) * 100).toFixed(0)}%`;
+      document.getElementById("metricPassRate").textContent = Math.round((passes / totalCount) * 100) + "%";
     }
 
-    function openRosterModal(targetClass = null) {
-      const modal = document.getElementById("rosterModal");
-      const selector = document.getElementById("modalClassSelector");
+    function openRosterModal(targetClass) {
+      var modal = document.getElementById("rosterModal");
+      var selector = document.getElementById("modalClassSelector");
       if (targetClass && currentRosters[targetClass]) {
         selector.value = targetClass;
       } else {
@@ -844,51 +997,53 @@
     }
 
     function openQuickAddStudentModal() {
-      const cls = document.getElementById("classSelect").value;
-      const newName = prompt(`Enter student name for ${cls}:`);
+      var cls = document.getElementById("classSelect").value;
+      var newName = prompt("Enter student name for " + cls + ":");
       if (newName && newName.trim()) {
         addStudentToClass(cls, newName.trim());
       }
     }
 
     function renderModalRosterList() {
-      const activeClass = document.getElementById("modalClassSelector").value;
-      const label = document.getElementById("modalAddClassLabel");
-      const countEl = document.getElementById("modalClassCount");
-      const listEl = document.getElementById("modalRosterItemsList");
-      const filter = document.getElementById("modalRosterFilter").value.toLowerCase().trim();
+      var activeClass = document.getElementById("modalClassSelector").value;
+      var label = document.getElementById("modalAddClassLabel");
+      var countEl = document.getElementById("modalClassCount");
+      var listEl = document.getElementById("modalRosterItemsList");
+      var filter = document.getElementById("modalRosterFilter").value.toLowerCase().trim();
 
       label.textContent = activeClass;
-      const students = currentRosters[activeClass] || [];
-      countEl.textContent = `${students.length} Students`;
+      var students = currentRosters[activeClass] || [];
+      countEl.textContent = students.length + " Students";
 
-      const filtered = students.filter(st => filter === "" || st.toLowerCase().includes(filter));
+      var filtered = students.filter(function(st) {
+        return filter === "" || st.toLowerCase().indexOf(filter) !== -1;
+      });
 
       if (filtered.length === 0) {
-        listEl.innerHTML = `<li class="p-4 text-center text-xs text-slate-400">No matching students found in ${activeClass}.</li>`;
+        listEl.innerHTML = '<li class="p-4 text-center text-xs text-slate-400">No matching students found.</li>';
         return;
       }
 
-      listEl.innerHTML = filtered.map((st, idx) => {
-        return `
-          <li class="px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-50 transition">
-            <span class="font-semibold text-slate-800 text-xs sm:text-sm flex items-center gap-2">
-              <span class="text-slate-400 font-mono text-[11px] w-5">${idx + 1}.</span>
-              <span>${st}</span>
-            </span>
-            <button onclick="removeStudentFromModalClass('${activeClass}', '${st.replace(/'/g, "\\'")}')" class="px-2 py-1 text-slate-400 hover:text-rose-600 rounded text-xs transition" title="Remove student">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </li>
-        `;
+      listEl.innerHTML = filtered.map(function(st, idx) {
+        return (
+          '<li class="px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-50 transition">' +
+            '<span class="font-semibold text-slate-800 text-xs sm:text-sm flex items-center gap-2">' +
+              '<span class="text-slate-400 font-mono text-[11px] w-5">' + (idx + 1) + '.</span>' +
+              '<span>' + st + '</span>' +
+            '</span>' +
+            '<button onclick="removeStudentFromModalClass(\'' + activeClass + '\', \'' + st.replace(/'/g, "\\'") + '\')" class="px-2 py-1 text-slate-400 hover:text-rose-600 rounded text-xs transition">' +
+              '<i class="fa-solid fa-trash-can"></i>' +
+            '</button>' +
+          '</li>'
+        );
       }).join("");
     }
 
     function addNewStudentToModalClass() {
-      const activeClass = document.getElementById("modalClassSelector").value;
-      const input = document.getElementById("newStudentNameInput");
-      const name = input.value.trim();
-      const errEl = document.getElementById("modalRosterErrorMsg");
+      var activeClass = document.getElementById("modalClassSelector").value;
+      var input = document.getElementById("newStudentNameInput");
+      var name = input.value.trim();
+      var errEl = document.getElementById("modalRosterErrorMsg");
 
       if (!name) {
         errEl.textContent = "Please enter a student name.";
@@ -904,30 +1059,31 @@
     }
 
     function addStudentToClass(className, studentName) {
-      const upperName = studentName.trim().toUpperCase();
+      var upperName = studentName.trim().toUpperCase();
       if (!currentRosters[className]) currentRosters[className] = [];
 
-      const exists = currentRosters[className].some(s => s.toUpperCase() === upperName);
-      if (exists) {
-        alert(`Student "${upperName}" is already enrolled in ${className}.`);
-        return false;
+      for (var i = 0; i < currentRosters[className].length; i++) {
+        if (currentRosters[className][i].toUpperCase() === upperName) {
+          alert('Student "' + upperName + '" is already enrolled in ' + className + '.');
+          return false;
+        }
       }
 
       currentRosters[className].push(upperName);
       currentRosters[className].sort();
       saveRosters();
       onClassChange();
-      showToast(`Added ${upperName} to ${className}!`);
+      showToast("Added " + upperName + " to " + className);
       return true;
     }
 
     function removeStudentFromModalClass(className, studentName) {
-      if (confirm(`Remove "${studentName}" from ${className}?`)) {
-        currentRosters[className] = currentRosters[className].filter(s => s !== studentName);
+      if (confirm('Remove "' + studentName + '" from ' + className + '?')) {
+        currentRosters[className] = currentRosters[className].filter(function(s) { return s !== studentName; });
         saveRosters();
         renderModalRosterList();
         onClassChange();
-        showToast(`Removed ${studentName}.`);
+        showToast("Removed " + studentName);
       }
     }
 
@@ -937,7 +1093,7 @@
     }
 
     function restorePortalDefaults() {
-      if (confirm("Reset all 15 class rosters back to the official 2025/2026 Portal List?")) {
+      if (confirm("Reset all rosters to the official 2025/2026 Portal List?")) {
         currentRosters = JSON.parse(JSON.stringify(DEFAULT_ROSTERS));
         saveRosters();
         populateClassSelectors();
@@ -948,11 +1104,11 @@
     }
 
     function updateTotalRosterBadge() {
-      let count = 0;
-      for (const cls in currentRosters) {
+      var count = 0;
+      for (var cls in currentRosters) {
         count += currentRosters[cls].length;
       }
-      const badge = document.getElementById("navRosterCountBadge");
+      var badge = document.getElementById("navRosterCountBadge");
       if (badge) badge.textContent = count;
     }
 
@@ -962,12 +1118,12 @@
         return;
       }
 
-      const filterClass = document.getElementById("filterClassSelect").value;
-      const filterSubject = document.getElementById("filterSubjectSelect").value;
+      var filterClass = document.getElementById("filterClassSelect").value;
+      var filterSubject = document.getElementById("filterSubjectSelect").value;
 
-      const dataToExport = recordedScores.filter(rec => {
-        const matchClass = filterClass === "ALL" || rec.className === filterClass;
-        const matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
+      var dataToExport = recordedScores.filter(function(rec) {
+        var matchClass = filterClass === "ALL" || rec.className === filterClass;
+        var matchSubject = filterSubject === "ALL" || rec.subject === filterSubject;
         return matchClass && matchSubject;
       });
 
@@ -976,63 +1132,53 @@
         return;
       }
 
-      const sheetData = dataToExport.map((item, idx) => ({
-        "No.": idx + 1,
-        "Student Name": item.student,
-        "Class": item.className,
-        "Subject": item.subject,
-        "Score (/100)": item.score,
-        "Grade": item.grade,
-        "Teacher Remarks": item.remark,
-        "Timestamp Recorded": item.timestamp
-      }));
+      var sheetData = dataToExport.map(function(item, idx) {
+        return {
+          "No.": idx + 1,
+          "Student Name": item.student,
+          "Class": item.className,
+          "Subject": item.subject,
+          "Score (/100)": item.score,
+          "Grade": item.grade,
+          "Teacher Remarks": item.remark,
+          "Timestamp Recorded": item.timestamp
+        };
+      });
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(sheetData);
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.json_to_sheet(sheetData);
 
       ws["!cols"] = [
-        { wch: 6 },
-        { wch: 32 },
-        { wch: 12 },
-        { wch: 16 },
-        { wch: 14 },
-        { wch: 10 },
-        { wch: 28 },
-        { wch: 22 }
+        { wch: 6 }, { wch: 32 }, { wch: 12 }, { wch: 16 },
+        { wch: 14 }, { wch: 10 }, { wch: 28 }, { wch: 22 }
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, "Exam Scores");
 
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const classTag = filterClass === "ALL" ? "All_Classes" : filterClass.replace(/\s+/g, "_");
-      const subjectTag = filterSubject === "ALL" ? "All_Subjects" : filterSubject.replace(/\s+/g, "_");
-      const filename = `ANASS_ScorePortal_${classTag}_${subjectTag}_${timestamp}.xlsx`;
+      var timestamp = new Date().toISOString().slice(0, 10);
+      var classTag = filterClass === "ALL" ? "All_Classes" : filterClass.replace(/\s+/g, "_");
+      var subjectTag = filterSubject === "ALL" ? "All_Subjects" : filterSubject.replace(/\s+/g, "_");
+      var filename = "ANASS_ScorePortal_" + classTag + "_" + subjectTag + "_" + timestamp + ".xlsx";
 
       XLSX.writeFile(wb, filename);
-      showToast(`Exported ${dataToExport.length} records!`);
+      showToast("Exported " + dataToExport.length + " records!");
     }
 
     function showToast(message) {
-      const toast = document.getElementById("toastNotification");
-      const msg = document.getElementById("toastMessage");
+      var toast = document.getElementById("toastNotification");
+      var msg = document.getElementById("toastMessage");
       msg.textContent = message;
       toast.classList.remove("translate-y-24", "opacity-0");
       toast.classList.add("translate-y-0", "opacity-100");
 
-      setTimeout(() => {
+      setTimeout(function() {
         toast.classList.remove("translate-y-0", "opacity-100");
         toast.classList.add("translate-y-24", "opacity-0");
       }, 2800);
     }
 
-    // Direct Bootstrapping Execution
-    initializeData();
-    populateClassSelectors();
-    updateSubjectDropdown();
-    onClassChange();
-    applyFiltersAndRenderTable();
-    updateAnalyticsMetrics();
-    updateTotalRosterBadge();
+    // Run portal initialization immediately
+    initializePortal();
   </script>
 </body>
 </html>
